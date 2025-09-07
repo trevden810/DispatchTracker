@@ -23,7 +23,7 @@ interface TrackingData {
   proximity: {
     isAtJob: boolean
     distance?: number
-    status: 'at-location' | 'nearby' | 'en-route' | 'far' | 'no-location'
+    status: 'at-location' | 'nearby' | 'en-route' | 'far'
   }
   lastUpdated: string
 }
@@ -143,7 +143,7 @@ export async function GET() {
     // Correlate vehicles with jobs
     const trackingData: TrackingData[] = vehicles.map((vehicle: any) => {
       const assignedJob = jobsByTruck.get(vehicle.id)
-      let proximity = { isAtJob: false, status: 'no-location' as const }
+      let proximity: { isAtJob: boolean; distance?: number; status: 'at-location' | 'nearby' | 'en-route' | 'far' } = { isAtJob: false, status: 'far' }
       
       if (vehicle.location && assignedJob) {
         const jobLocation = mockJobLocations.get(assignedJob.id)

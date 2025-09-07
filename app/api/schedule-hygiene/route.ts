@@ -71,7 +71,7 @@ export async function GET() {
     }
     
     // Sample data for first few jobs
-    const sampleJobs = data.response.data.slice(0, 5).map(job => ({
+    const sampleJobs = data.response.data.slice(0, 5).map((job: { fieldData: Record<string, any> }) => ({
       jobId: job.fieldData._kp_job_id,
       data: job.fieldData
     }))
@@ -80,12 +80,17 @@ export async function GET() {
     const completeStatuses = ['Complete', 'Re-scheduled', 'Attempted', 'Canceled', 'Done']
     
     // Look for schedule hygiene issues in sample data
-    const hygieneIssues = []
-    
-    sampleJobs.forEach(job => {
+    const hygieneIssues: Array<{
+      jobId: string;
+      status: string;
+      issue: string;
+      timeFields: string[];
+    }> = []
+
+    sampleJobs.forEach((job: { jobId: string; data: Record<string, any> }) => {
       const status = job.data.job_status
       const hasTimeFields = fieldAnalysis.scheduling.some(field => job.data[field])
-      
+
       if (hasTimeFields && status && !completeStatuses.includes(status)) {
         hygieneIssues.push({
           jobId: job.jobId,
@@ -114,7 +119,7 @@ export async function GET() {
           'Jobs assigned to trucks but no arrival recorded'
         ]
       },
-      sampleData: sampleJobs.map(job => ({
+      sampleData: sampleJobs.map((job: { jobId: string; data: Record<string, any> }) => ({
         jobId: job.jobId,
         relevantFields: Object.fromEntries(
           [...fieldAnalysis.scheduling, ...fieldAnalysis.status]
@@ -126,8 +131,7 @@ export async function GET() {
         incompleteWithTimes: {
           description: 'Find jobs with time data but incomplete status',
           query: {
-            "job_status": "!=Complete",
-            "job_status": "!=Done"
+            "job_status": ["!=Complete", "!=Done"]
           }
         },
         pastDueActive: {

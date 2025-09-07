@@ -17,7 +17,7 @@ async function getFileMakerAuth() {
     throw new Error(`Auth failed: ${response.status}`)
   }
 
-  const data = await response.json()
+  const data: any = await response.json()
   return data.response.token
 }
 
@@ -46,7 +46,7 @@ export async function GET() {
       throw new Error(`Query failed: ${response.status}`)
     }
 
-    const data = await response.json()
+    const data: any = await response.json()
     
     if (!data.response.data || data.response.data.length === 0) {
       return NextResponse.json({
@@ -80,7 +80,7 @@ export async function GET() {
       other: []
     }
     
-    allFields.forEach(field => {
+    allFields.forEach((field: string) => {
       const fieldLower = field.toLowerCase()
       
       if (fieldLower.includes('id') || fieldLower.includes('_kp_') || fieldLower.includes('_kf_')) {
@@ -103,14 +103,14 @@ export async function GET() {
     })
     
     // Get sample data for scheduling fields
-    const sampleData = data.response.data.slice(0, 3).map(record => {
+    const sampleData = data.response.data.slice(0, 3).map((record: { fieldData: Record<string, any> }) => {
       const schedulingData: any = { jobId: record.fieldData._kp_job_id }
       
-      fieldCategories.scheduling.forEach(field => {
+      fieldCategories.scheduling.forEach((field: string) => {
         schedulingData[field] = record.fieldData[field]
       })
       
-      fieldCategories.status.forEach(field => {
+      fieldCategories.status.forEach((field: string) => {
         schedulingData[field] = record.fieldData[field]
       })
       
@@ -118,7 +118,7 @@ export async function GET() {
     })
     
     // Check for potential schedule hygiene issues
-    const scheduleHygieneFields = allFields.filter(field => {
+    const scheduleHygieneFields = allFields.filter((field: string) => {
       const fieldLower = field.toLowerCase()
       return fieldLower.includes('arrive') || 
              fieldLower.includes('complete') || 

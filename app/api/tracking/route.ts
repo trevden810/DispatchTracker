@@ -171,7 +171,8 @@ export async function GET() {
         vehicleLocation: vehicle.location,
         assignedJob: assignedJob || null,
         proximity,
-        lastUpdated: vehicle.last_updated
+        lastUpdated: vehicle.last_updated,
+        diagnostics: vehicle.diagnostics || undefined
       }
     })
     

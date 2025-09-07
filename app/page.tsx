@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Truck, MapPin, Clock, CheckCircle, AlertTriangle, RefreshCw, Navigation } from 'lucide-react'
+import { Truck, MapPin, Clock, CheckCircle, AlertTriangle, RefreshCw, Navigation, Grid3X3 } from 'lucide-react'
 
 interface TrackingData {
   vehicleId: string
@@ -172,16 +172,25 @@ export default function DispatchTracker() {
               </div>
             </div>
             
-            <div className="text-right text-white">
-              <div className="text-sm text-pepmove-100">
-                {lastRefresh ? (
-                  <>Last update: {lastRefresh.toLocaleTimeString()}</>
-                ) : (
-                  'Initializing...'
-                )}
-              </div>
-              <div className="text-xs text-pepmove-200">
-                Aurora, CO • Mountain Time
+            <div className="flex items-center space-x-4">
+              <a 
+                href="/cards"
+                className="btn-secondary bg-white/20 border-white/30 text-white hover:bg-white/30"
+              >
+                <Grid3X3 className="h-4 w-4 mr-2" />
+                Cards View
+              </a>
+              <div className="text-right text-white">
+                <div className="text-sm text-pepmove-100">
+                  {lastRefresh ? (
+                    <>Last update: {lastRefresh.toLocaleTimeString()}</>
+                  ) : (
+                    'Initializing...'
+                  )}
+                </div>
+                <div className="text-xs text-pepmove-200">
+                  Aurora, CO • Mountain Time
+                </div>
               </div>
             </div>
           </div>

@@ -98,14 +98,14 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
 
   const getEngineStatusColor = (status: string) => {
     switch (status) {
-      case 'on': return 'text-pepmove-600'
+      case 'on': return 'text-lime-600'
       case 'idle': return 'text-amber-600'
-      default: return 'text-pepgrey-400'
+      default: return 'text-gray-400'
     }
   }
 
   const getFuelLevelColor = (level: number) => {
-    if (level > 50) return 'text-pepmove-600'
+    if (level > 50) return 'text-lime-600'
     if (level > 25) return 'text-amber-600'
     return 'text-red-600'
   }
@@ -126,16 +126,16 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
                 )}
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-pepgrey-900">
+                <h3 className="text-lg font-semibold text-gray-900">
                   {vehicle.vehicleName}
                 </h3>
-                <p className="text-sm text-pepgrey-500">ID: {vehicle.vehicleId}</p>
+                <p className="text-sm text-gray-500">ID: {vehicle.vehicleId}</p>
               </div>
             </div>
             
             <button
               onClick={() => setIsFlipped(true)}
-              className="btn-secondary p-2 hover:bg-pepgrey-200 transition-colors"
+              className="btn-secondary p-2 hover:bg-gray-200 transition-colors"
               title="View diagnostics"
             >
               <RotateCcw className="h-4 w-4" />
@@ -144,36 +144,36 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
 
           {/* Job Assignment */}
           <div className="mb-4">
-            <h4 className="text-sm font-medium text-pepgrey-700 mb-2">Current Assignment</h4>
+            <h4 className="text-sm font-medium text-gray-700 mb-2">Current Assignment</h4>
             {vehicle.assignedJob ? (
-              <div className="bg-pepmove-50 border border-pepmove-200 rounded-lg p-3">
+              <div className="bg-lime-50 border border-lime-200 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold text-pepgrey-900">
+                  <span className="font-semibold text-gray-900">
                     Job #{vehicle.assignedJob.id}
                   </span>
-                  <span className="text-sm text-pepgrey-600">
+                  <span className="text-sm text-gray-600">
                     {vehicle.assignedJob.type}
                   </span>
                 </div>
-                <p className="text-sm text-pepgrey-700 mb-2">
+                <p className="text-sm text-gray-700 mb-2">
                   Status: {vehicle.assignedJob.status}
                 </p>
                 {vehicle.assignedJob.estimatedLocation && (
-                  <p className="text-xs text-pepgrey-500 truncate">
+                  <p className="text-xs text-gray-500 truncate">
                     📍 {vehicle.assignedJob.estimatedLocation.address}
                   </p>
                 )}
               </div>
             ) : (
-              <div className="bg-pepgrey-50 border border-pepgrey-200 rounded-lg p-3 text-center">
-                <p className="text-pepgrey-400 italic text-sm">No assignment</p>
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+                <p className="text-gray-400 italic text-sm">No assignment</p>
               </div>
             )}
           </div>
 
           {/* Location Status */}
           <div className="mb-4">
-            <h4 className="text-sm font-medium text-pepgrey-700 mb-2">Location Status</h4>
+            <h4 className="text-sm font-medium text-gray-700 mb-2">Location Status</h4>
             <div className="flex items-center justify-between">
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${statusConfig.color}`}>
                 {statusConfig.icon}
@@ -181,7 +181,7 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
                   {vehicle.proximity.status.replace('-', ' ')}
                 </span>
               </span>
-              <span className="text-sm font-medium text-pepgrey-700">
+              <span className="text-sm font-medium text-gray-700">
                 {vehicle.proximity.distance ? formatDistance(vehicle.proximity.distance) : '—'}
               </span>
             </div>
@@ -192,21 +192,21 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
             <div className="grid grid-cols-2 gap-3">
               <div className="flex items-center space-x-2">
                 <Activity className={`h-4 w-4 ${getEngineStatusColor(vehicle.diagnostics.engineStatus)}`} />
-                <span className="text-sm text-pepgrey-700 capitalize">
+                <span className="text-sm text-gray-700 capitalize">
                   {vehicle.diagnostics.engineStatus}
                 </span>
               </div>
               <div className="flex items-center space-x-2">
                 <Fuel className={`h-4 w-4 ${getFuelLevelColor(vehicle.diagnostics.fuelLevel)}`} />
-                <span className="text-sm text-pepgrey-700">
+                <span className="text-sm text-gray-700">
                   {vehicle.diagnostics.fuelLevel}% fuel
                 </span>
               </div>
             </div>
           )}
 
-          <div className="mt-4 pt-3 border-t border-pepgrey-200">
-            <p className="text-xs text-pepgrey-500">
+          <div className="mt-4 pt-3 border-t border-gray-200">
+            <p className="text-xs text-gray-500">
               Last updated: {new Date(vehicle.lastUpdated).toLocaleTimeString()}
             </p>
           </div>

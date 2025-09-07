@@ -117,11 +117,11 @@ export default function DispatchTracker() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pepgrey-50 to-pepmove-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-lime-50 flex items-center justify-center">
         <div className="text-center animate-fade-in">
           <div className="loading-ring h-12 w-12 mx-auto mb-6"></div>
-          <h2 className="text-xl font-semibold text-pepgrey-700 mb-2">Loading DispatchTracker</h2>
-          <p className="text-pepgrey-500">Connecting to fleet management systems...</p>
+          <h2 className="text-xl font-semibold text-gray-700 mb-2">Loading DispatchTracker</h2>
+          <p className="text-gray-500">Connecting to fleet management systems...</p>
         </div>
       </div>
     )
@@ -129,7 +129,7 @@ export default function DispatchTracker() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pepgrey-50 to-red-50 flex items-center justify-center mobile-padding">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-red-50 flex items-center justify-center mobile-padding">
         <div className="glass-card p-8 max-w-md w-full text-center animate-slide-up">
           <div className="flex items-center justify-center mb-4">
             <AlertTriangle className="h-8 w-8 text-red-500" />
@@ -155,7 +155,7 @@ export default function DispatchTracker() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pepgrey-50 to-pepmove-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-lime-50">
       {/* Header */}
       <div className="bg-gradient-pepmove shadow-lg">
         <div className="container-responsive py-6">
@@ -168,7 +168,7 @@ export default function DispatchTracker() {
                 <h1 className="text-2xl font-bold text-white text-shadow-sm">
                   PepMove DispatchTracker
                 </h1>
-                <p className="text-pepmove-100">Real-time Fleet Management</p>
+                <p className="text-lime-100">Real-time Fleet Management</p>
               </div>
             </div>
             
@@ -181,14 +181,14 @@ export default function DispatchTracker() {
                 Cards View
               </a>
               <div className="text-right text-white">
-                <div className="text-sm text-pepmove-100">
+                <div className="text-sm text-lime-100">
                   {lastRefresh ? (
                     <>Last update: {lastRefresh.toLocaleTimeString()}</>
                   ) : (
                     'Initializing...'
                   )}
                 </div>
-                <div className="text-xs text-pepmove-200">
+                <div className="text-xs text-lime-200">
                   Aurora, CO • Mountain Time
                 </div>
               </div>
@@ -207,8 +207,8 @@ export default function DispatchTracker() {
                   <Truck className="h-8 w-8 text-white" />
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-pepgrey-900">{summary.total}</div>
-                  <div className="text-pepgrey-600 font-medium">Fleet Vehicles</div>
+                  <div className="text-3xl font-bold text-gray-900">{summary.total}</div>
+                  <div className="text-gray-600 font-medium">Fleet Vehicles</div>
                 </div>
               </div>
               <div className="h-12 w-1 bg-gradient-pepmove rounded-full"></div>
@@ -222,8 +222,8 @@ export default function DispatchTracker() {
                   <MapPin className="h-8 w-8 text-white" />
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-pepgrey-900">{summary.withJobs}</div>
-                  <div className="text-pepgrey-600 font-medium">Active Jobs</div>
+                  <div className="text-3xl font-bold text-gray-900">{summary.withJobs}</div>
+                  <div className="text-gray-600 font-medium">Active Jobs</div>
                 </div>
               </div>
               <div className="h-12 w-1 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
@@ -240,8 +240,8 @@ export default function DispatchTracker() {
                   )}
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-pepgrey-900">{summary.atJobs}</div>
-                  <div className="text-pepgrey-600 font-medium">On Location</div>
+                  <div className="text-3xl font-bold text-gray-900">{summary.atJobs}</div>
+                  <div className="text-gray-600 font-medium">On Location</div>
                 </div>
               </div>
               <div className="h-12 w-1 bg-gradient-to-b from-emerald-500 to-emerald-600 rounded-full"></div>
@@ -253,10 +253,10 @@ export default function DispatchTracker() {
         <div className="glass-card p-6 animate-slide-up">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
             <div>
-              <h2 className="text-xl font-semibold text-pepgrey-900 mb-1">
+              <h2 className="text-xl font-semibold text-gray-900 mb-1">
                 Live Driver Tracking
               </h2>
-              <p className="text-pepgrey-600 text-sm">
+              <p className="text-gray-600 text-sm">
                 Real-time vehicle locations and job correlations
               </p>
             </div>
@@ -285,7 +285,7 @@ export default function DispatchTracker() {
             </div>
           </div>
           
-          <div className="divide-y divide-pepgrey-100">
+          <div className="divide-y divide-gray-100">
             {trackingData.map((item, index) => {
               const statusConfig = getStatusConfig(item.proximity.status)
               return (
@@ -299,10 +299,10 @@ export default function DispatchTracker() {
                       <Truck className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                      <div className="font-semibold text-pepgrey-900">
+                      <div className="font-semibold text-gray-900">
                         {item.vehicleName}
                       </div>
-                      <div className="text-sm text-pepgrey-500">
+                      <div className="text-sm text-gray-500">
                         ID: {item.vehicleId}
                       </div>
                     </div>
@@ -311,20 +311,20 @@ export default function DispatchTracker() {
                   <div>
                     {item.assignedJob ? (
                       <div className="space-y-1">
-                        <div className="font-medium text-pepgrey-900">
+                        <div className="font-medium text-gray-900">
                           Job #{item.assignedJob.id}
                         </div>
-                        <div className="text-sm text-pepgrey-600">
+                        <div className="text-sm text-gray-600">
                           {item.assignedJob.type} • {item.assignedJob.status}
                         </div>
                         {item.assignedJob.estimatedLocation && (
-                          <div className="text-xs text-pepgrey-500 truncate">
+                          <div className="text-xs text-gray-500 truncate">
                             {item.assignedJob.estimatedLocation.address}
                           </div>
                         )}
                       </div>
                     ) : (
-                      <div className="text-sm text-pepgrey-400 italic">
+                      <div className="text-sm text-gray-400 italic">
                         No assignment
                       </div>
                     )}
@@ -339,11 +339,11 @@ export default function DispatchTracker() {
                     </span>
                   </div>
                   
-                  <div className="text-sm font-medium text-pepgrey-700">
+                  <div className="text-sm font-medium text-gray-700">
                     {item.proximity.distance ? (
                       formatDistance(item.proximity.distance)
                     ) : (
-                      <span className="text-pepgrey-400">—</span>
+                      <span className="text-gray-400">—</span>
                     )}
                   </div>
                 </div>
@@ -353,11 +353,11 @@ export default function DispatchTracker() {
           
           {trackingData.length === 0 && (
             <div className="text-center py-12">
-              <Truck className="h-12 w-12 text-pepgrey-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-pepgrey-500 mb-2">
+              <Truck className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-500 mb-2">
                 No Active Vehicles
               </h3>
-              <p className="text-pepgrey-400">
+              <p className="text-gray-400">
                 Vehicles will appear here when tracking data is available
               </p>
             </div>

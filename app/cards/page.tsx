@@ -91,11 +91,11 @@ export default function VehicleCards() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pepgrey-50 to-pepmove-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-lime-50 flex items-center justify-center">
         <div className="text-center animate-fade-in">
           <div className="loading-ring h-12 w-12 mx-auto mb-6"></div>
-          <h2 className="text-xl font-semibold text-pepgrey-700 mb-2">Loading Vehicle Fleet</h2>
-          <p className="text-pepgrey-500">Fetching diagnostics and tracking data...</p>
+          <h2 className="text-xl font-semibold text-gray-700 mb-2">Loading Vehicle Fleet</h2>
+          <p className="text-gray-500">Fetching diagnostics and tracking data...</p>
         </div>
       </div>
     )
@@ -103,7 +103,7 @@ export default function VehicleCards() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pepgrey-50 to-red-50 flex items-center justify-center mobile-padding">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-red-50 flex items-center justify-center mobile-padding">
         <div className="glass-card p-8 max-w-md w-full text-center animate-slide-up">
           <div className="flex items-center justify-center mb-4">
             <AlertTriangle className="h-8 w-8 text-red-500" />
@@ -130,7 +130,7 @@ export default function VehicleCards() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pepgrey-50 to-pepmove-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-lime-50">
       {/* Header */}
       <div className="bg-gradient-pepmove shadow-lg">
         <div className="container-responsive py-6">
@@ -143,7 +143,7 @@ export default function VehicleCards() {
                 <h1 className="text-2xl font-bold text-white text-shadow-sm">
                   Fleet Vehicle Cards
                 </h1>
-                <p className="text-pepmove-100">Detailed diagnostics and real-time tracking</p>
+                <p className="text-lime-100">Detailed diagnostics and real-time tracking</p>
               </div>
             </div>
             
@@ -156,14 +156,14 @@ export default function VehicleCards() {
                 Table View
               </a>
               <div className="text-right text-white">
-                <div className="text-sm text-pepmove-100">
+                <div className="text-sm text-lime-100">
                   {lastRefresh ? (
                     <>Last update: {lastRefresh.toLocaleTimeString()}</>
                   ) : (
                     'Initializing...'
                   )}
                 </div>
-                <div className="text-xs text-pepmove-200">
+                <div className="text-xs text-lime-200">
                   {summary.withDiagnostics}/{summary.total} with diagnostics
                 </div>
               </div>
@@ -176,20 +176,20 @@ export default function VehicleCards() {
         {/* Summary Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-fade-in">
           <div className="glass-card p-4 text-center">
-            <div className="text-2xl font-bold text-pepgrey-900">{summary.total}</div>
-            <div className="text-sm text-pepgrey-600">Total Vehicles</div>
+            <div className="text-2xl font-bold text-gray-900">{summary.total}</div>
+            <div className="text-sm text-gray-600">Total Vehicles</div>
           </div>
           <div className="glass-card p-4 text-center">
-            <div className="text-2xl font-bold text-pepmove-600">{summary.withJobs}</div>
-            <div className="text-sm text-pepgrey-600">With Jobs</div>
+            <div className="text-2xl font-bold text-lime-600">{summary.withJobs}</div>
+            <div className="text-sm text-gray-600">With Jobs</div>
           </div>
           <div className="glass-card p-4 text-center">
             <div className="text-2xl font-bold text-emerald-600">{summary.atJobs}</div>
-            <div className="text-sm text-pepgrey-600">On Location</div>
+            <div className="text-sm text-gray-600">On Location</div>
           </div>
           <div className="glass-card p-4 text-center">
             <div className="text-2xl font-bold text-blue-600">{summary.withDiagnostics}</div>
-            <div className="text-sm text-pepgrey-600">With Diagnostics</div>
+            <div className="text-sm text-gray-600">With Diagnostics</div>
           </div>
         </div>
 
@@ -197,10 +197,10 @@ export default function VehicleCards() {
         <div className="glass-card p-6 animate-slide-up">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
             <div>
-              <h2 className="text-xl font-semibold text-pepgrey-900 mb-1">
+              <h2 className="text-xl font-semibold text-gray-900 mb-1">
                 Vehicle Diagnostics Dashboard
               </h2>
-              <p className="text-pepgrey-600 text-sm">
+              <p className="text-gray-600 text-sm">
                 Click any card to flip and view detailed diagnostics • Auto-refresh every 30 seconds
               </p>
             </div>
@@ -231,11 +231,11 @@ export default function VehicleCards() {
         
         {trackingData.length === 0 && (
           <div className="glass-card p-12 text-center animate-fade-in">
-            <Truck className="h-16 w-16 text-pepgrey-300 mx-auto mb-6" />
-            <h3 className="text-xl font-semibold text-pepgrey-500 mb-3">
+            <Truck className="h-16 w-16 text-gray-300 mx-auto mb-6" />
+            <h3 className="text-xl font-semibold text-gray-500 mb-3">
               No Vehicles Available
             </h3>
-            <p className="text-pepgrey-400 mb-6">
+            <p className="text-gray-400 mb-6">
               Vehicle cards will appear here when tracking data is available
             </p>
             <button

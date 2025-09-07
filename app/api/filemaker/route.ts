@@ -60,7 +60,16 @@ export async function GET() {
     const allFields = Object.keys(sampleRecord.fieldData)
     
     // Categorize fields by type
-    const fieldCategories = {
+    const fieldCategories: {
+      identification: string[]
+      scheduling: string[]
+      status: string[]
+      location: string[]
+      vehicle: string[]
+      customer: string[]
+      notes: string[]
+      other: string[]
+    } = {
       identification: [],
       scheduling: [],
       status: [],

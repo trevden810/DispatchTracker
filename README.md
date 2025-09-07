@@ -1,151 +1,118 @@
 # PepMove DispatchTracker
 
-Fleet management application providing real-time GPS tracking of vehicles correlated with FileMaker job assignments for logistics excellence.
+Professional fleet management application providing real-time GPS tracking correlated with FileMaker job assignments.
 
-## Quick Start
+## 🚀 Live Application
 
-```bash
-# Clone repository
-gh repo clone trevden810/DispatchTracker
-cd DispatchTracker
+- **Production**: [www.pepmovetracker.info](https://www.pepmovetracker.info)
+- **Table View**: Real-time tracking dashboard
+- **Cards View**: [/cards](https://www.pepmovetracker.info/cards) - Flip-card diagnostics
 
-# Install dependencies
-npm install
+## 📊 Current Status
 
-# Configure environment
-cp .env.example .env.local
-# Update .env.local with API credentials
+✅ **MVP Deployed** - 51 vehicles tracked  
+✅ **PepMove Branding** - Professional green/grey design  
+✅ **Samsara Integration** - Real-time GPS & diagnostics  
+✅ **FileMaker Integration** - Job assignments  
+✅ **Vehicle Detail Cards** - Flip animations with comprehensive diagnostics  
+⏳ **Enhanced FileMaker Fields** - Pending admin approval  
 
-# Run development server
-npm run dev
+## 🛠 Tech Stack
+
+- **Frontend**: Next.js 14 + React 18 + TypeScript
+- **Styling**: Tailwind CSS + PepMove brand system
+- **APIs**: Samsara Fleet + FileMaker Data
+- **Deployment**: Vercel (auto-deploy from GitHub)
+- **GPS Logic**: Haversine formula (0.5-mile proximity)
+
+## 🏗 Architecture
+
+```
+DispatchTracker/
+├── app/
+│   ├── api/
+│   │   ├── tracking/        # Vehicle-job correlation
+│   │   ├── vehicles/        # Samsara Fleet API
+│   │   ├── jobs/           # FileMaker Data API
+│   │   └── schedule-hygiene/ # Business logic alerts
+│   ├── cards/              # Vehicle detail cards view
+│   └── page.tsx            # Main dashboard
+├── components/
+│   └── VehicleCard.tsx     # Flip-card component
+└── lib/
+    └── gps-utils.ts        # Distance calculations
 ```
 
-Visit `http://localhost:3002` or `https://www.pepmovetracker.info`
+## 📋 Available Data
 
-## Project Information
+**Current FileMaker Fields**:
+- `_kp_job_id`, `job_date`, `job_status`, `job_type`
+- `*kf*trucks_id`, `_kf_notification_id`, `_kf_client_code_id`
+- `notes_call_ahead`, `notes_driver`, `_kf_disposition`
 
-- **Live Domain**: [www.pepmovetracker.info](https://www.pepmovetracker.info)
-- **Vercel Project**: prj_dfZJFBw99fDHGa2ij1IcPKddUoG4
-- **GitHub Repository**: trevden810/DispatchTracker
-- **Location**: Aurora, Colorado (Mountain Time)
+**Requested Fields** (pending):
+- `time_arival`, `time_complete` - Schedule hygiene
+- `address_C1`, `customer_C1` - Location accuracy
+- `due_date` - Deadline monitoring
 
-## Current Status
+## 🔧 Development
 
-✅ **Functional MVP** - 51 vehicles tracked  
-✅ **Samsara Integration** - Real-time GPS data  
-✅ **FileMaker Integration** - Job assignments  
-✅ **PepMove Branding** - Professional UI  
-⏳ **Enhanced Fields** - Pending FileMaker access
+```bash
+# Setup
+gh repo clone trevden810/DispatchTracker
+cd DispatchTracker
+npm install
 
-## Features
+# Environment
+cp .env.example .env.local
+# Add Samsara & FileMaker credentials
 
-### Real-Time Tracking
+# Development
+npm run dev  # Port 3002
+
+# Deploy
+git push origin main  # Auto-deploys to Vercel
+```
+
+## 🚗 Features
+
+**Real-Time Tracking**
 - 51+ vehicles with GPS coordinates
-- 30-second refresh intervals  
-- 0.5-mile proximity detection
-- Status indicators: at-location, nearby, en-route, far
+- 30-second auto-refresh
+- Status: at-location, nearby, en-route, far
 
-### API Integrations
-- **Samsara Fleet API** - Vehicle GPS, engine status, fuel levels
-- **FileMaker Data API** - Job assignments and scheduling
+**Vehicle Detail Cards**
+- Flip animations (front: jobs, back: diagnostics)
+- Engine status, fuel levels, maintenance
+- Driver information, performance metrics
 
-### Schedule Hygiene (Pending)
+**Schedule Hygiene** (pending enhanced fields)
 - Flag jobs with arrival times but incomplete status
 - Alert on overdue assignments
 - Customer location accuracy
 
-## Tech Stack
+## 📍 Business Logic
 
-- **Frontend**: Next.js 14 + React 18 + TypeScript
-- **Styling**: Tailwind CSS + PepMove brand colors
-- **APIs**: Samsara Fleet + FileMaker Data
-- **Deployment**: Vercel with auto-deployment
-- **GPS Logic**: Haversine formula distance calculations
-
-## Available Fields
-
-### Current FileMaker Access
-- `_kp_job_id`, `job_date`, `job_status`, `job_type`
-- `*kf*trucks_id`, `_kf_notification_id`, `notes_call_ahead`
-- `notes_driver`, `_kf_client_code_id`, `_kf_disposition`
-
-### Requested Fields
-- `time_arival`, `time_complete` - Schedule hygiene
-- `address_C1`, `customer_C1` - Location accuracy  
-- `due_date` - Deadline monitoring
-
-## Development
-
-```bash
-# Start development
-npm run dev
-
-# Build for production
-npm run build
-
-# Deploy to Vercel
-git push origin main  # Auto-deploys to pepmovetracker.info
-```
-
-## API Endpoints
-
-- `/api/tracking` - Vehicle-job correlation with GPS proximity
-- `/api/vehicles` - Samsara vehicle data
-- `/api/jobs` - FileMaker job assignments
-- `/api/schedule-hygiene` - Schedule discrepancy detection
-
-## Environment Variables
-
-```bash
-# Samsara API
-SAMSARA_API_TOKEN=your_samsara_api_token_here
-SAMSARA_BASE_URL=https://api.samsara.com
-
-# FileMaker API  
-FILEMAKER_USERNAME=trevor_api
-FILEMAKER_PASSWORD=XcScS2yRoTtMo7
-FILEMAKER_BASE_URL=https://modd.mainspringhost.com
-FILEMAKER_JOBS_DB=PEP2_1
-FILEMAKER_JOBS_LAYOUT=jobs_api
-
-# GPS Configuration
-JOB_PROXIMITY_THRESHOLD_MILES=0.5
-TRACKING_REFRESH_INTERVAL=30
-```
-
-## Business Logic
-
-### GPS Proximity Detection
 ```typescript
-// 0.5-mile threshold for "at job site"
+// GPS Proximity Detection
 const isAtJob = calculateDistance(vehicleCoords, jobCoords) <= 0.5
 
-// Status levels based on distance
-if (distance <= 0.5) status = 'at-location'
-else if (distance <= 1.0) status = 'nearby'  
-else if (distance <= 10) status = 'en-route'
-else status = 'far'
-```
-
-### Schedule Hygiene Rules
-```typescript
-// Flag jobs with timing discrepancies
+// Schedule Hygiene Rules
 const hygieneIssues = jobs.filter(job => 
   job.time_arival && 
   !['Complete', 'Done', 'Re-scheduled', 'Attempted', 'Canceled'].includes(job.status)
 )
 ```
 
-## Deployment Info
+## 🎯 Deployment Info
 
-- **Production URL**: https://www.pepmovetracker.info
-- **Vercel Project ID**: prj_dfZJFBw99fDHGa2ij1IcPKddUoG4
-- **Auto-deploy**: GitHub main branch → Vercel
-- **Custom Domain**: Configured and active
+- **Vercel Project**: `prj_dfZJFBw99fDHGa2ij1IcPKddUoG4`
+- **GitHub**: `trevden810/DispatchTracker`
+- **Domain**: Custom domain configured
+- **Auto-Deploy**: main branch → production
 
-## Contact
+## 📞 Contact
 
 **Trevor** - Service Operations Manager  
 **Company**: PepMove Logistics  
-**Location**: Aurora, Colorado  
-**Time Zone**: America/Denver (Mountain Time)
+**Location**: Aurora, Colorado (Mountain Time)

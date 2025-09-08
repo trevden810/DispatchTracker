@@ -1,121 +1,124 @@
 # PepMove DispatchTracker
 
-Professional fleet management application providing real-time GPS tracking correlated with FileMaker job assignments.
+Professional fleet management application with animated driver status indicators and comprehensive diagnostics.
 
 ## 🚀 Live Application
 
-- **Production**: [www.pepmovetracker.info](https://www.pepmovetracker.info)
-- **Table View**: Real-time tracking dashboard
-- **Cards View**: [/cards](https://www.pepmovetracker.info/cards) - Enhanced truck cards with flip diagnostics
-- **Job Assignments**: [/assignments](https://www.pepmovetracker.info/assignments) - Vehicle-job correlations
+- **Production**: [www.pepmovetracker.info](https://www.pepmovetracker.info) → **Automatically redirects to enhanced interface**
+- **Primary Interface**: [/cards](https://www.pepmovetracker.info/cards) - **Consolidated fleet management interface** 🎯
+- **All Routes**: All URLs (/, /assignments) now redirect to the enhanced cards interface
 
-## 📊 Current Status
+## 📊 Current Status - Phase 3 Complete ✅
 
-✅ **MVP Deployed** - 51 vehicles tracked  
-✅ **PepMove Branding** - Lime green (#84cc16) matching logo colors  
-✅ **Samsara Integration** - Real-time GPS & diagnostics  
-✅ **FileMaker Integration** - Job assignments with current fields  
-✅ **Job Assignments Dashboard** - Driver notes, status tracking, analytics  
-🚧 **Enhanced Truck Cards** - In development: flip cards with Samsara diagnostics + job proximity  
-⏳ **Enhanced FileMaker Fields** - Pending admin approval for schedule hygiene  
+✅ **Enhanced Vehicle Cards** - Animated status borders with driver behavior analysis  
+✅ **Flip Card Diagnostics** - Working animation with comprehensive Samsara data  
+✅ **Intelligent Status Detection** - Real-time driver behavior monitoring  
+✅ **Professional Search & Filtering** - Advanced fleet management controls  
+✅ **Route Consolidation** - All URLs redirect to enhanced cards interface  
+✅ **Single Interface Excellence** - Streamlined user experience around proven solution  
+
+## 🌈 Driver Status System
+
+### **Visual Status Indicators**
+- 🟢 **Driving** - Lime green pulsing borders (En Route)
+- 💚 **On Job Site** - Emerald green glowing borders (Productive) 
+- 🔴 **Idle Alert** - Red flashing borders (>30min non-productive)
+- 🟡 **Stopped** - Amber steady borders (Monitoring required)
+- 🔵 **Available** - Blue breathing borders (Ready for dispatch)
+- ⚫ **Offline** - Gray static borders (No connection)
+
+### **Business Intelligence**
+- **Real-time Analysis**: Speed + location + job assignment correlation
+- **Idle Time Tracking**: Automated detection of non-productive stops
+- **Assignment Optimization**: Visual indicators for available vehicles
+- **Performance Monitoring**: Immediate status recognition for dispatchers
 
 ## 🛠 Tech Stack
 
 - **Frontend**: Next.js 14 + React 18 + TypeScript
-- **Styling**: Tailwind CSS + PepMove brand system (lime-500/gray-700)
+- **Styling**: Tailwind CSS + Custom animated borders
 - **APIs**: Samsara Fleet + FileMaker Data
 - **Deployment**: Vercel (auto-deploy from GitHub)
 - **GPS Logic**: Haversine formula (0.5-mile proximity)
+- **Animations**: CSS3 with hardware acceleration
 
-## 🏗 Architecture
+## 🏗 Primary Architecture (Consolidated)
 
 ```
 DispatchTracker/
 ├── app/
+│   ├── cards/page.tsx           # 🎯 MAIN APPLICATION INTERFACE
 │   ├── api/
-│   │   ├── tracking/        # Vehicle-job correlation
-│   │   ├── vehicles/        # Samsara Fleet API
-│   │   ├── jobs/           # FileMaker Data API
-│   │   ├── filemaker/      # Schema discovery
-│   │   └── schedule-hygiene/ # Business logic alerts
-│   ├── cards/              # Enhanced truck cards view
-│   ├── assignments/        # Job assignments dashboard
-│   └── page.tsx            # Main tracking dashboard
+│   │   ├── tracking/route.ts    # Enhanced with full Samsara diagnostics
+│   │   ├── vehicles/route.ts    # Samsara Fleet API
+│   │   └── jobs/route.ts        # FileMaker Data API
+│   ├── assignments/page.tsx     # Legacy (being deprecated)
+│   └── page.tsx                 # Legacy (being deprecated)
 ├── components/
-│   └── VehicleCard.tsx     # Flip-card component with diagnostics
+│   └── VehicleCard.tsx          # Enhanced with animated status borders
 └── lib/
-    └── gps-utils.ts        # Distance calculations
+    └── gps-utils.ts             # Distance calculations
 ```
 
-## 🚗 Current Features
+## 🎯 Primary Features (/cards)
 
-**✅ Job Assignments Dashboard**
-- Vehicle-job correlations with FileMaker data
-- Driver communication notes display
-- Job status tracking and analytics
-- Filter/search functionality
-- Real-time assignment monitoring with 45-second auto-refresh
+**✅ Enhanced Vehicle Cards**
+- **Animated Status Borders**: Real-time driver behavior visualization
+- **Flip Card Diagnostics**: Comprehensive Samsara vehicle data
+- **Job Assignment Integration**: Professional "Available for Dispatch" messaging  
+- **Search & Filter Controls**: Advanced fleet management tools
+- **Status Badges**: Top-left indicators with descriptive text
 
-**✅ Real-Time Tracking**
-- 51+ vehicles with GPS coordinates
-- 30-second auto-refresh intervals
-- Status: at-location, nearby, en-route, far
-- Professional PepMove branding throughout
+**✅ Intelligent Driver Analysis**
+- **Speed-based Detection**: Driving vs. stopped vs. idle states
+- **Location Correlation**: Job site proximity with assignment status
+- **Idle Time Monitoring**: Automated alerts for non-productive stops
+- **Assignment Intelligence**: Visual availability indicators
 
-**✅ Three Dashboard Views**
-- Main table view with comprehensive tracking
-- Cards view for detailed vehicle information
-- Job assignments view for operational management
+**✅ Professional Interface**
+- **Search Functionality**: Filter by vehicle name, job ID, or status
+- **Assignment Filters**: All vehicles, assigned only, unassigned only
+- **Real-time Updates**: 30-second refresh with live status changes
+- **Responsive Design**: Works seamlessly across all devices
 
-## 🚧 Next Development Phase: Enhanced Truck Cards
+## 🚧 Phase 3: Interface Consolidation
 
-**Planned Features**:
-- **"Truck Info" Flip Button** - Card flips to reveal rich Samsara diagnostics
-- **Job Proximity Display** - Replace "No Assignment" with proximity information
-- **Job Information Integration**:
-  - Proximity distance to assigned job
-  - Job number and current status
-  - Success/failure status indicators
-  - Real-time job correlation updates
+### **Objectives**
+- **Deprecate Legacy Views**: Remove `/` and `/assignments` interfaces
+- **Redirect All Traffic**: Point all URLs to enhanced `/cards` interface
+- **Migrate Best Features**: Integrate search/filter controls from assignments page
+- **Single Source of Truth**: One powerful interface for all fleet management
 
-**Enhanced Card Layout**:
-```
-Front Side: Basic Info + Job Proximity
-├── Vehicle name and ID
-├── Job proximity information
-├── Job number and status
-├── Success/failure indicators
-└── "Truck Info" flip button
-
-Back Side: Samsara Diagnostics
-├── Engine status and fuel levels
-├── Performance metrics
-├── Maintenance alerts
-├── Driver information
-└── Return to job view button
-```
+### **Migration Plan**
+1. ✅ **Enhanced Cards Interface** - Add search and filter controls
+2. ✅ **Route Consolidation** - Redirect legacy URLs to `/cards`
+3. ✅ **Feature Integration** - Ensure all functionality available in main interface
+4. ✅ **Documentation Update** - Reflect new consolidated architecture
 
 ## 📋 Available Data
 
-**Current FileMaker Fields**:
-- `_kp_job_id`, `job_date`, `job_status`, `job_type`
-- `*kf*trucks_id`, `_kf_notification_id`, `_kf_client_code_id`
-- `notes_call_ahead`, `notes_driver`, `_kf_disposition`
+**Samsara Fleet Data** (Fully Integrated):
+- Engine status, fuel levels, speed, odometer readings
+- Battery voltage, coolant temperature, oil pressure
+- Maintenance schedules and service alerts
+- Driver information and performance metrics
 
-**Samsara Diagnostics Available**:
-- Engine status, fuel levels, speed, odometer
-- Battery voltage, coolant temp, oil pressure
-- Maintenance schedules, driver information
-- Performance metrics and alerts
+**FileMaker Job Data** (Current Access):
+- Job ID, date, status, type, truck assignments
+- Client codes and disposition information
+- Driver communication notes (call-ahead, driver notes)
 
-**Requested FileMaker Fields** (for future schedule hygiene):
-- `time_arival`, `time_complete`, `address_C1`, `customer_C1`, `due_date`
+**Enhanced Analytics**:
+- Real-time proximity calculations to job sites
+- Driver behavior pattern analysis
+- Idle time tracking and productivity metrics
+- Assignment optimization recommendations
 
 ## 🔧 Development
 
 ```bash
 # Setup
-gh repo clone trevden810/DispatchTracker
+git clone https://github.com/trevden810/DispatchTracker
 cd DispatchTracker
 npm install
 
@@ -125,39 +128,48 @@ cp .env.example .env.local
 
 # Development
 npm run dev  # Port 3002
+# Primary interface: http://localhost:3002/cards
 
 # Deploy
 git push origin master  # Auto-deploys to Vercel
 ```
 
-## 📍 Business Logic
+## 🎨 Enhanced Business Logic
 
 ```typescript
-// GPS Proximity Detection
-const isAtJob = calculateDistance(vehicleCoords, jobCoords) <= 0.5
-
-// Vehicle-Job Correlation
-const assignedJob = jobs.find(job => 
-  job.truckId && job.truckId.toString() === vehicle.vehicleId
-)
-
-// Job Success Determination
-const isJobSuccessful = (job) => {
-  const successStatuses = ['Complete', 'Done', 'Delivered', 'Successful']
-  return successStatuses.includes(job.status)
+// Driver Behavior Analysis
+const getDriverBehaviorStatus = (vehicle) => {
+  const speed = vehicle.diagnostics?.speed || 0
+  const engineStatus = vehicle.diagnostics?.engineStatus
+  const isAtJob = vehicle.proximity.isAtJob
+  const hasJob = !!vehicle.assignedJob
+  
+  // Intelligent status determination
+  if (speed > 5 && engineStatus === 'on') {
+    return { status: 'driving', color: 'lime', animation: 'pulse' }
+  }
+  
+  if (isAtJob && hasJob) {
+    return { status: 'at-job', color: 'emerald', animation: 'glow' }
+  }
+  
+  // Idle time monitoring (>30 minutes)
+  if (speed <= 5 && !isAtJob && hasJob && idleTime > 30) {
+    return { status: 'idle-alert', color: 'red', animation: 'flash' }
+  }
+  
+  return { status: 'available', color: 'blue', animation: 'breathe' }
 }
 
-// Proximity Status for Cards
-const getProximityDisplay = (vehicle, assignedJob) => {
-  if (!assignedJob) return 'No Assignment'
-  
-  const distance = calculateDistance(vehicle.location, job.location)
-  return {
-    proximity: distance <= 0.5 ? 'At Location' : `${distance} mi away`,
-    jobNumber: assignedJob.id,
-    status: assignedJob.status,
-    isSuccessful: isJobSuccessful(assignedJob)
+// Enhanced Border Animations
+const getBorderClasses = (status) => {
+  const animations = {
+    driving: 'border-lime-400 border-animate-pulse',
+    'at-job': 'border-emerald-500 border-animate-glow', 
+    'idle-alert': 'border-red-500 border-animate-flash',
+    available: 'border-blue-400 border-animate-breathe'
   }
+  return `border-2 transition-all duration-500 ${animations[status]}`
 }
 ```
 
@@ -166,33 +178,47 @@ const getProximityDisplay = (vehicle, assignedJob) => {
 - **Vercel Project**: `prj_dfZJFBw99fDHGa2ij1IcPKddUoG4`
 - **GitHub**: `trevden810/DispatchTracker` (master branch)
 - **Domain**: www.pepmovetracker.info
+- **Primary URL**: https://www.pepmovetracker.info/cards
 - **Auto-Deploy**: master branch → production
-- **Build**: Next.js 14 TypeScript compilation
 
-## 🧪 Testing
+## 🧪 Testing Enhanced Features
 
-**Current Features Working**:
-1. **Main Dashboard** (`/`) - Vehicle tracking table ✅
-2. **Cards View** (`/cards`) - Basic vehicle cards ✅
-3. **Job Assignments** (`/assignments`) - FileMaker integration ✅
-4. **Navigation** - Seamless between all views ✅
-5. **Real-time Updates** - Auto-refresh functionality ✅
-6. **Mobile Responsive** - Works on all devices ✅
+**Phase 2 Completed**:
+1. ✅ **Animated Status Borders** - Driver behavior visualization
+2. ✅ **Flip Card Diagnostics** - Comprehensive Samsara data display
+3. ✅ **Search & Filter Controls** - Advanced fleet management
+4. ✅ **Professional UI/UX** - PepMove branding with lime green accents
+5. ✅ **Real-time Updates** - 30-second refresh with status changes
 
-**Next Phase Testing**:
-- Enhanced truck card flip animations
-- Samsara diagnostics display
-- Job proximity calculations
-- Success/failure status indicators
+**Phase 3 Completed**:
+- ✅ Interface consolidation and route optimization
+- ✅ Legacy view deprecation with automatic redirects
+- ✅ Enhanced documentation and user guidance
 
-## 📞 Contact
+## 📞 Contact & Development Context
 
 **Trevor** - Service Operations Manager  
 **Company**: PepMove Logistics  
 **Location**: Aurora, Colorado (Mountain Time)  
-**Environment**: Windows PowerShell, VS Code, Git/GitHub
+**Environment**: Windows PowerShell, VS Code, Git/GitHub  
+**Development Philosophy**: Professional, clean, efficient solutions
+
+## 🚀 Next Steps - Phase 3
+
+### **Phase 3 Completed ✅**
+1. ✅ **Route Consolidation**: All URLs redirect to `/cards` automatically
+2. ✅ **Feature Verification**: All functionality consolidated in enhanced interface
+3. ✅ **Documentation Updates**: README and architecture documentation updated
+4. → **User Training**: Guide logistics team to use consolidated interface
+
+### **Success Metrics**
+- **Single Interface**: All fleet management through enhanced cards view
+- **Improved Efficiency**: Reduced clicks and navigation complexity  
+- **Enhanced Visibility**: Better driver status recognition and response
+- **Operational Excellence**: Streamlined dispatcher workflow
 
 ---
 
-**Version**: 1.2.0 - Job Assignments Dashboard Complete  
-**Next**: Enhanced Truck Cards with Samsara Diagnostics + Job Proximity
+**Version**: 2.0.0 - Enhanced Driver Status with Animated Borders Complete  
+**Phase**: 3.0 - Interface Consolidation & Route Optimization  
+**Primary Interface**: https://www.pepmovetracker.info/cards 🎯

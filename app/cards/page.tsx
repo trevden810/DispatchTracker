@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Truck, AlertTriangle, RefreshCw, Grid3X3, List, Clipboard } from 'lucide-react'
+import { Truck, AlertTriangle, RefreshCw, Grid3X3, List, Clipboard, Search, Filter } from 'lucide-react'
 import VehicleCard from '../../components/VehicleCard'
 
 interface TrackingData {
@@ -50,6 +50,8 @@ export default function VehicleCards() {
   const [error, setError] = useState<string | null>(null)
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filter, setFilter] = useState<'all' | 'assigned' | 'unassigned'>('all')
 
   const fetchTrackingData = async () => {
     try {
@@ -89,6 +91,28 @@ export default function VehicleCards() {
     return () => clearInterval(interval)
   }, [])
 
+  // Filter tracking data based on search and filter
+  const filteredTrackingData = trackingData.filter(vehicle => {
+    // Filter by assignment status
+    if (filter === 'assigned' && !vehicle.assignedJob) return false
+    if (filter === 'unassigned' && vehicle.assignedJob) return false
+    
+    // Filter by search term
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase()
+      const vehicleMatch = vehicle.vehicleName.toLowerCase().includes(searchLower)
+      const jobMatch = vehicle.assignedJob ? (
+        vehicle.assignedJob.id.toString().includes(searchLower) ||
+        vehicle.assignedJob.type?.toLowerCase().includes(searchLower) ||
+        vehicle.assignedJob.status?.toLowerCase().includes(searchLower)
+      ) : false
+      
+      return vehicleMatch || jobMatch
+    }
+    
+    return true
+  })
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-lime-50 flex items-center justify-center">
@@ -126,7 +150,9 @@ export default function VehicleCards() {
     total: trackingData.length,
     withJobs: trackingData.filter(t => t.assignedJob).length,
     atJobs: trackingData.filter(t => t.proximity.isAtJob).length,
-    withDiagnostics: trackingData.filter(t => t.diagnostics).length
+    withDiagnostics: trackingData.filter(t => t.diagnostics).length,
+    // Filtered results
+    filtered: filteredTrackingData.length
   }
 
   return (
@@ -141,27 +167,13 @@ export default function VehicleCards() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white text-shadow-sm">
-                  Fleet Vehicle Cards
+                  PepMove DispatchTracker
                 </h1>
-                <p className="text-lime-100">Detailed diagnostics and real-time tracking</p>
+                <p className="text-lime-100">Real-time fleet management • Enhanced vehicle diagnostics • Job assignments</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-4">
-              <a 
-                href="/"
-                className="btn-secondary bg-white/20 border-white/30 text-white hover:bg-white/30"
-              >
-                <List className="h-4 w-4 mr-2" />
-                Table View
-              </a>
-              <a 
-                href="/assignments"
-                className="btn-secondary bg-white/20 border-white/30 text-white hover:bg-white/30"
-              >
-                <Clipboard className="h-4 w-4 mr-2" />
-                Job Assignments
-              </a>
               <div className="text-right text-white">
                 <div className="text-sm text-lime-100">
                   {lastRefresh ? (
@@ -200,34 +212,91 @@ export default function VehicleCards() {
           </div>
         </div>
 
-        {/* Controls */}
+        {/* Enhanced Controls with Search and Filter */}
         <div className="glass-card p-6 animate-slide-up">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-            <div>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+            <div className="flex-1">
               <h2 className="text-xl font-semibold text-gray-900 mb-1">
-                Vehicle Diagnostics Dashboard
+              Live Fleet Operations Dashboard
               </h2>
               <p className="text-gray-600 text-sm">
-                Click any card to flip and view detailed diagnostics • Auto-refresh every 30 seconds
+              Real-time vehicle tracking, job assignments, driver status, and comprehensive diagnostics
               </p>
             </div>
             
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className={`btn-primary flex items-center space-x-2 ${
-                refreshing ? 'opacity-75 cursor-not-allowed' : ''
-              }`}
-            >
-              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-              <span>{refreshing ? 'Updating...' : 'Refresh Now'}</span>
-            </button>
+            <div className="flex items-center space-x-4">
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search vehicles or jobs..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lime-500 focus:border-transparent"
+                />
+              </div>
+              
+              {/* Filter */}
+              <select
+                value={filter}
+                onChange={(e) => setFilter(e.target.value as any)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-lime-500 focus:border-transparent"
+              >
+                <option value="all">All Vehicles</option>
+                <option value="assigned">Assigned Only</option>
+                <option value="unassigned">Unassigned Only</option>
+              </select>
+              
+              {/* Refresh */}
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className={`btn-primary flex items-center space-x-2 ${
+                  refreshing ? 'opacity-75 cursor-not-allowed' : ''
+                }`}
+              >
+                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                <span>{refreshing ? 'Updating...' : 'Refresh'}</span>
+              </button>
+            </div>
           </div>
+          
+          {/* Search Results Info */}
+          {(searchTerm || filter !== 'all') && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-600">
+                Showing {summary.filtered} of {summary.total} vehicles
+                {searchTerm && (
+                  <span>
+                    {' '}matching "{searchTerm}"
+                    <button
+                      onClick={() => setSearchTerm('')}
+                      className="ml-2 text-lime-600 hover:text-lime-700 underline"
+                    >
+                      clear search
+                    </button>
+                  </span>
+                )}
+                {filter !== 'all' && (
+                  <span>
+                    {' '}• Filter: {filter === 'assigned' ? 'Assigned vehicles only' : 'Unassigned vehicles only'}
+                    <button
+                      onClick={() => setFilter('all')}
+                      className="ml-2 text-lime-600 hover:text-lime-700 underline"
+                    >
+                      show all
+                    </button>
+                  </span>
+                )}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Vehicle Cards Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {trackingData.map((vehicle, index) => (
+          {filteredTrackingData.map((vehicle, index) => (
             <VehicleCard
               key={vehicle.vehicleId}
               vehicle={vehicle}
@@ -236,22 +305,34 @@ export default function VehicleCards() {
           ))}
         </div>
         
-        {trackingData.length === 0 && (
+        {filteredTrackingData.length === 0 && (
           <div className="glass-card p-12 text-center animate-fade-in">
             <Truck className="h-16 w-16 text-gray-300 mx-auto mb-6" />
             <h3 className="text-xl font-semibold text-gray-500 mb-3">
-              No Vehicles Available
+              {searchTerm ? 'No Vehicles Found' : 'No Vehicles Available'}
             </h3>
             <p className="text-gray-400 mb-6">
-              Vehicle cards will appear here when tracking data is available
+              {searchTerm 
+                ? 'No vehicles match your search criteria' 
+                : 'Vehicle cards will appear here when tracking data is available'
+              }
             </p>
-            <button
-              onClick={handleRefresh}
-              className="btn-primary"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Check for Vehicles
-            </button>
+            {searchTerm ? (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="btn-secondary"
+              >
+                Clear Search
+              </button>
+            ) : (
+              <button
+                onClick={handleRefresh}
+                className="btn-primary"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Check for Vehicles
+              </button>
+            )}
           </div>
         )}
       </div>

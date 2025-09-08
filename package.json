@@ -1,8 +1,8 @@
 {
   "name": "pepmove-dispatchtracker",
-  "version": "1.2.0",
+  "version": "3.0.0",
   "private": true,
-  "description": "PepMove fleet management with real-time GPS tracking and FileMaker job correlation",
+  "description": "PepMove consolidated fleet management - Enhanced cards interface with animated driver status indicators",
   "homepage": "https://www.pepmovetracker.info",
   "repository": {
     "type": "git",

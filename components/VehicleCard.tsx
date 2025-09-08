@@ -32,7 +32,7 @@ interface VehicleData {
   lastUpdated: string
   // Enhanced Samsara vehicle diagnostics
   diagnostics?: {
-    engineStatus: 'on' | 'off' | 'idle'
+    engineStatus: 'on' | 'off' | 'idle' | 'unknown'
     fuelLevel: number // percentage
     speed: number // mph
     engineHours: number
@@ -114,9 +114,9 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
     }
     
     // Determine driver behavior based on REAL Samsara engine state
-    const isDriving = speed > 5 && (engineStatus === 'on')
+    const isDriving = speed > 5 && engineStatus === 'on'
     const isIdle = speed <= 5 && (engineStatus === 'on' || engineStatus === 'idle')
-    const isStopped = engineStatus === 'off' || speed === 0
+    const isStopped = (engineStatus === 'off' || engineStatus === 'unknown') || speed === 0
     
     // Mock idle time calculation (replace with real backend calculation)
     const mockIdleTime = speed <= 5 ? Math.floor(Math.random() * 120) + 5 : 0
@@ -178,6 +178,16 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
       return {
         status: 'offline-with-job',
         label: 'Engine Off',
+        color: 'gray',
+        animation: 'none',
+        priority: 4
+      }
+    }
+    
+    if (engineStatus === 'unknown' && hasJob) {
+      return {
+        status: 'unknown-with-job',
+        label: 'Status Unknown',
         color: 'gray',
         animation: 'none',
         priority: 4
@@ -270,6 +280,8 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
     switch (status) {
       case 'on': return 'text-lime-600'
       case 'idle': return 'text-amber-600'
+      case 'off': return 'text-gray-400'
+      case 'unknown': return 'text-gray-500'
       default: return 'text-gray-400'
     }
   }

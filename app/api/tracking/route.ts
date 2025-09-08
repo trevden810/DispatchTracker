@@ -27,7 +27,7 @@ interface TrackingData {
   }
   lastUpdated: string
   diagnostics?: {
-    engineStatus: 'on' | 'off' | 'idle'
+    engineStatus: 'on' | 'off' | 'idle' | 'unknown'
     fuelLevel: number
     speed: number
     engineHours: number

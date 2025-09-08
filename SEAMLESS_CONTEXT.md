@@ -38,7 +38,7 @@
 #### **Samsara Fleet API** ✅ WORKING
 ```
 Endpoint: https://api.samsara.com/fleet/vehicles/stats
-Token: samsara_api_VXKWxiewMU9DvBoEH1ttkHmHHOT1q8
+Token: REDACTED
 Types: gps,engineStates,fuelPercents,obdOdometerMeters
 Rate Limit: 25 req/sec (using 0.033 req/sec)
 Refresh: 30 seconds with cache-busting headers

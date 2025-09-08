@@ -8,21 +8,22 @@
 
 **✅ COMPLETED FEATURES**
 - **MVP Deployed**: https://www.pepmovetracker.info (51 vehicles tracked)
-- **PepMove Branding**: Professional green/grey design system implemented
+- **PepMove Branding**: Lime green (#84cc16) matching logo colors exactly
 - **Vehicle Detail Cards**: Flip animations with comprehensive Samsara diagnostics
-- **Dual Views**: Table view (/) and Cards view (/cards) with navigation
+- **Triple Views**: Table view (/), Cards view (/cards), Job Assignments (/assignments)
 - **Real-time APIs**: Samsara Fleet + FileMaker integration working
+- **Job Assignments Dashboard**: Driver notes, status tracking, analytics
 
-**⏳ CURRENT ISSUE**
-- **Deployment Error**: TypeScript compilation failure in `/app/api/filemaker/route.ts` 
-- **Fix Applied**: Added proper type annotations to `fieldCategories` object
-- **Status**: Ready for redeployment after fix
+**⚠️ CURRENT ISSUE**
+- **Deployment Error**: Missing `ClipboardList` import in cards/page.tsx
+- **Fix Applied**: Added missing imports to both main and cards pages
+- **Status**: Ready for redeployment after import fix
 
 ## Technical Stack
 
 - **Framework**: Next.js 14 + TypeScript + Tailwind CSS
 - **Deployment**: Vercel Project `prj_dfZJFBw99fDHGa2ij1IcPKddUoG4`
-- **Repository**: `trevden810/DispatchTracker` (auto-deploy from main)
+- **Repository**: `trevden810/DispatchTracker` (auto-deploy from master branch)
 - **Development**: Port 3002, Aurora CO timezone
 
 ## API Configuration
@@ -49,7 +50,8 @@ Auth: trevor_api:XcScS2yRoTtMo7
 
 **GPS Proximity**: 0.5-mile threshold using Haversine formula
 **Status Levels**: at-location (≤0.5mi), nearby (≤1mi), en-route (≤10mi), far (>10mi)
-**Schedule Hygiene**: Flag jobs with arrival times but incomplete status
+**Vehicle-Job Correlation**: Match `*kf*trucks_id` with Samsara vehicle IDs
+**Schedule Hygiene**: Flag jobs with arrival times but incomplete status (pending enhanced fields)
 
 ## File Structure
 ```
@@ -59,9 +61,10 @@ C:\Projects\DispatchTracker/
 │   │   ├── tracking/route.ts     # Main correlation logic
 │   │   ├── vehicles/route.ts     # Samsara integration
 │   │   ├── jobs/route.ts         # FileMaker integration
-│   │   └── filemaker/route.ts    # Schema discovery (NEEDS FIX)
+│   │   └── filemaker/route.ts    # Schema discovery
 │   ├── cards/page.tsx            # Vehicle cards view
-│   └── page.tsx                  # Main dashboard
+│   ├── assignments/page.tsx      # Job assignments dashboard
+│   └── page.tsx                  # Main tracking dashboard
 ├── components/
 │   └── VehicleCard.tsx           # Flip-card component
 └── lib/
@@ -76,12 +79,23 @@ C:\Projects\DispatchTracker/
 **Canva**: Professional presentations, diagrams
 **PDF Processing**: Documentation handling
 
+## Application Features
+
+**1. Main Dashboard (/)** - Real-time vehicle tracking table
+**2. Cards View (/cards)** - Diagnostic flip cards with Samsara data
+**3. Job Assignments (/assignments)** - NEW! FileMaker integration featuring:
+- Vehicle-job correlations with current FileMaker fields
+- Driver communication notes (call-ahead and driver notes)
+- Job status tracking and analytics
+- Filter/search functionality (assigned/unassigned vehicles)
+- Real-time assignment monitoring with auto-refresh
+
 ## Immediate Next Actions
 
-1. **Deploy Fix**: Push TypeScript fix to resolve build error
-2. **FileMaker Request**: Send field access request to administrator
-3. **Schedule Hygiene**: Implement monitoring once fields available
-4. **Performance**: Optimize for 50+ concurrent vehicles
+1. **Deploy Fix**: Push missing import fix to resolve build error
+2. **Test Job Assignments**: Verify new dashboard functionality
+3. **FileMaker Request**: Send field access request to administrator
+4. **Schedule Hygiene**: Implement monitoring once enhanced fields available
 
 ## User Profile
 
@@ -92,6 +106,6 @@ C:\Projects\DispatchTracker/
 
 ## Recent Context
 
-Just completed vehicle detail cards implementation with 3D flip animations showing comprehensive diagnostics. Fixed deployment error in FileMaker route. Project ready for continued development or production troubleshooting.
+Just completed Job Assignments Dashboard with FileMaker integration using available fields. Updated color scheme to match PepMove logo exactly (lime-500 #84cc16). Fixed deployment error with missing imports. Ready to deploy and test new vehicle-job correlation features.
 
 **Use this context to immediately continue development without requiring project re-explanation.**

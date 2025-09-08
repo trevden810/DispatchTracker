@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { 
-  Truck, ClipboardList, Calendar, Package, Phone, MessageCircle, 
+  Truck, Clipboard, Calendar, Package, Phone, MessageCircle, 
   RefreshCw, AlertTriangle, CheckCircle, Clock, Users, BarChart3,
   ArrowLeft, Filter, Search
 } from 'lucide-react'
@@ -137,7 +137,7 @@ export default function JobAssignments() {
       case 'pickup':
         return <Truck className="h-4 w-4 text-lime-600" />
       default:
-        return <ClipboardList className="h-4 w-4 text-gray-600" />
+        return <Clipboard className="h-4 w-4 text-gray-600" />
     }
   }
 
@@ -222,7 +222,7 @@ export default function JobAssignments() {
                 <ArrowLeft className="h-6 w-6 text-white" />
               </a>
               <div className="bg-white/20 p-3 rounded-lg backdrop-blur-sm">
-                <ClipboardList className="h-8 w-8 text-white" />
+                <Clipboard className="h-8 w-8 text-white" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white text-shadow-sm">
@@ -269,7 +269,7 @@ export default function JobAssignments() {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-3 rounded-lg">
-                  <ClipboardList className="h-8 w-8 text-white" />
+                  <Clipboard className="h-8 w-8 text-white" />
                 </div>
                 <div>
                   <div className="text-3xl font-bold text-gray-900">{stats.activeJobs}</div>

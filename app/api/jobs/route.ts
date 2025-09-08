@@ -96,10 +96,12 @@ export async function GET(request: Request) {
           date: fieldData.job_date,
           status: fieldData.job_status,
           type: fieldData.job_type,
-          location: null, // Jobs don't have GPS coordinates in FileMaker
+          location: null, // Jobs don't have GPS coordinates in FileMaker yet
           truckId: fieldData['*kf*trucks_id'],
-          clientCode: fieldData['*kf*client_code_id'],
-          notes: fieldData.notes_call_ahead || fieldData.notes_driver
+          clientCode: fieldData['_kf_client_code_id'],
+          notesCallAhead: fieldData.notes_call_ahead,
+          notesDriver: fieldData.notes_driver,
+          disposition: fieldData._kf_disposition
         }
       })
       .filter(Boolean)

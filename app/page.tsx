@@ -180,6 +180,13 @@ export default function DispatchTracker() {
                 <Grid3X3 className="h-4 w-4 mr-2" />
                 Cards View
               </a>
+              <a 
+                href="/assignments"
+                className="btn-secondary bg-white/20 border-white/30 text-white hover:bg-white/30"
+              >
+                <ClipboardList className="h-4 w-4 mr-2" />
+                Job Assignments
+              </a>
               <div className="text-right text-white">
                 <div className="text-sm text-lime-100">
                   {lastRefresh ? (

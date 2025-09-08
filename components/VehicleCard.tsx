@@ -404,23 +404,40 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
             <div className="grid grid-cols-2 gap-3">
               <div className="flex items-center space-x-2">
                 <Activity className={`h-4 w-4 ${getEngineStatusColor(vehicle.diagnostics.engineStatus)}`} />
-                <span className="text-sm text-gray-700 capitalize">
-                  {vehicle.diagnostics.engineStatus}
+                <span className="text-sm text-gray-700">
+                  {vehicle.diagnostics.engineStatus === 'unknown' ? (
+                    <span className="text-gray-500">Engine: No data</span>
+                  ) : (
+                    <span className="capitalize">Engine: {vehicle.diagnostics.engineStatus}</span>
+                  )}
                 </span>
               </div>
               <div className="flex items-center space-x-2">
                 <Fuel className={`h-4 w-4 ${getFuelLevelColor(vehicle.diagnostics.fuelLevel)}`} />
                 <span className="text-sm text-gray-700">
-                  {vehicle.diagnostics.fuelLevel}% fuel
+                  {vehicle.diagnostics.fuelLevel > 0 ? (
+                    `${vehicle.diagnostics.fuelLevel}% fuel`
+                  ) : (
+                    <span className="text-gray-500">Fuel: No data</span>
+                  )}
                 </span>
               </div>
             </div>
           )}
 
           <div className="mt-4 pt-3 border-t border-gray-200">
-            <p className="text-xs text-gray-500">
-              Last updated: {new Date(vehicle.lastUpdated).toLocaleTimeString()}
-            </p>
+            <div className="flex justify-between items-center">
+              <p className="text-xs text-gray-500">
+                Last updated: {new Date(vehicle.lastUpdated).toLocaleTimeString()}
+              </p>
+              <div className="text-xs text-gray-400">
+                {vehicle.diagnostics?.engineStatus === 'unknown' ? (
+                  <span>GPS data only</span>
+                ) : (
+                  <span>Engine + GPS data</span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -465,7 +482,11 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
                     <div className="flex justify-between">
                       <span className="text-gray-600">Status:</span>
                       <span className={`font-medium capitalize ${getEngineStatusColor(vehicle.diagnostics.engineStatus)}`}>
-                        {vehicle.diagnostics.engineStatus}
+                        {vehicle.diagnostics.engineStatus === 'unknown' ? (
+                          <span className="text-gray-500 text-xs">No engine data</span>
+                        ) : (
+                          vehicle.diagnostics.engineStatus
+                        )}
                       </span>
                     </div>
                   </div>
@@ -507,7 +528,11 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
                     <div className="flex justify-between">
                       <span className="text-gray-600">Fuel Level:</span>
                       <span className={`font-medium ${getFuelLevelColor(vehicle.diagnostics.fuelLevel)}`}>
-                        {vehicle.diagnostics.fuelLevel}%
+                        {vehicle.diagnostics.fuelLevel > 0 ? (
+                          `${vehicle.diagnostics.fuelLevel}%`
+                        ) : (
+                          <span className="text-gray-500 text-xs">No fuel data</span>
+                        )}
                       </span>
                     </div>
                   </div>

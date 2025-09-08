@@ -4,20 +4,78 @@
 
 **I'm working on PepMove DispatchTracker** - a production fleet management application at `C:\Projects\DispatchTracker` that correlates Samsara vehicle GPS data with FileMaker job assignments for real-time logistics operations.
 
-## Current Status (Ready for Handoff)
+## Current Status (Post-Successful Deployment)
 
-**✅ COMPLETED FEATURES**
+**✅ PHASE 1 COMPLETED - Job Assignments Dashboard**
 - **MVP Deployed**: https://www.pepmovetracker.info (51 vehicles tracked)
 - **PepMove Branding**: Lime green (#84cc16) matching logo colors exactly
-- **Vehicle Detail Cards**: Flip animations with comprehensive Samsara diagnostics
-- **Triple Views**: Table view (/), Cards view (/cards), Job Assignments (/assignments)
-- **Real-time APIs**: Samsara Fleet + FileMaker integration working
-- **Job Assignments Dashboard**: Driver notes, status tracking, analytics
+- **Three Dashboard Views**: Table view (/), Cards view (/cards), Job Assignments (/assignments)
+- **Real-time APIs**: Samsara Fleet + FileMaker integration working perfectly
+- **Job Assignments Dashboard**: Driver notes, status tracking, analytics, search/filter
+- **Icon Fix Deployed**: Successfully replaced ClipboardList with Clipboard across all pages
 
-**⚠️ CURRENT ISSUE**
-- **Deployment Error**: Missing `ClipboardList` import in cards/page.tsx
-- **Fix Applied**: Added missing imports to both main and cards pages
-- **Status**: Ready for redeployment after import fix
+**🚧 PHASE 2 IN DEVELOPMENT - Enhanced Truck Cards**
+- **Current Cards**: Basic vehicle information with "No Assignment" placeholders
+- **Target Enhancement**: Flip cards with Samsara diagnostics + job proximity information
+- **Business Requirement**: Replace "No Assignment" with meaningful job proximity data
+
+## Phase 2 Development Requirements
+
+### Enhanced Truck Card Specifications
+
+#### Front Side (Job-Focused View)
+**Replace Current "No Assignment" Section With:**
+- **Job Proximity**: Distance to assigned job location
+- **Job Number**: Display job ID from FileMaker correlation
+- **Job Status**: Current assignment status
+- **Success Indicator**: Visual indicator if job status is successful/complete
+- **"Truck Info" Button**: Triggers flip to diagnostics view
+
+#### Back Side (Samsara Diagnostics View)
+**Rich API Information Display:**
+- **Engine Status**: On/off/idle with visual indicators
+- **Fuel Level**: Percentage with gauge visualization
+- **Performance Metrics**: Speed, odometer, engine hours
+- **Maintenance Data**: Oil pressure, coolant temp, battery voltage
+- **Driver Information**: Current driver name and ID
+- **Maintenance Alerts**: Upcoming service requirements
+- **Return Button**: Flip back to job view
+
+### Business Logic Enhancements
+
+#### Job Proximity Calculation
+```typescript
+// Enhanced proximity display for truck cards
+const getJobProximityInfo = (vehicle, assignedJob) => {
+  if (!assignedJob) {
+    return {
+      display: 'Available for Dispatch',
+      status: 'unassigned',
+      distance: null
+    }
+  }
+  
+  const distance = calculateDistance(vehicle.location, job.estimatedLocation)
+  return {
+    proximity: distance <= 0.5 ? 'At Job Location' : `${distance.toFixed(1)} mi away`,
+    jobNumber: assignedJob.id,
+    status: assignedJob.status,
+    isSuccessful: ['Complete', 'Done', 'Delivered', 'Successful'].includes(assignedJob.status),
+    distance: distance
+  }
+}
+```
+
+#### Success Status Determination
+```typescript
+const isJobSuccessful = (jobStatus) => {
+  const successStatuses = [
+    'Complete', 'Done', 'Delivered', 'Successful', 
+    'Finished', 'Accomplished', 'Completed'
+  ]
+  return successStatuses.includes(jobStatus)
+}
+```
 
 ## Technical Stack
 
@@ -28,14 +86,15 @@
 
 ## API Configuration
 
-**Samsara Fleet API** (Working)
+**Samsara Fleet API** (Working Perfectly)
 ```
 Token: your_samsara_api_token_here
 Base: https://api.samsara.com
-Features: GPS coordinates, engine status, fuel levels
+Features: GPS coordinates, engine status, fuel levels, diagnostics
+Available Data: engineStates, fuelLevel, gpsLocation, maintenance, driver info
 ```
 
-**FileMaker Data API** (Limited Access)
+**FileMaker Data API** (Current Access)
 ```
 URL: https://modd.mainspringhost.com/fmi/data/vLatest
 Database: PEP2_1, Layout: jobs_api
@@ -44,14 +103,7 @@ Auth: trevor_api:XcScS2yRoTtMo7
 
 **Current Fields**: `_kp_job_id`, `job_date`, `job_status`, `job_type`, `*kf*trucks_id`, `_kf_notification_id`, `notes_call_ahead`, `notes_driver`, `_kf_client_code_id`, `_kf_disposition`
 
-**Requested Fields**: `time_arival`, `time_complete`, `address_C1`, `due_date`, `customer_C1`
-
-## Business Logic
-
-**GPS Proximity**: 0.5-mile threshold using Haversine formula
-**Status Levels**: at-location (≤0.5mi), nearby (≤1mi), en-route (≤10mi), far (>10mi)
-**Vehicle-Job Correlation**: Match `*kf*trucks_id` with Samsara vehicle IDs
-**Schedule Hygiene**: Flag jobs with arrival times but incomplete status (pending enhanced fields)
+**Pending Request**: `time_arival`, `time_complete`, `address_C1`, `due_date`, `customer_C1`
 
 ## File Structure
 ```
@@ -62,40 +114,60 @@ C:\Projects\DispatchTracker/
 │   │   ├── vehicles/route.ts     # Samsara integration
 │   │   ├── jobs/route.ts         # FileMaker integration
 │   │   └── filemaker/route.ts    # Schema discovery
-│   ├── cards/page.tsx            # Vehicle cards view
-│   ├── assignments/page.tsx      # Job assignments dashboard
-│   └── page.tsx                  # Main tracking dashboard
+│   ├── cards/page.tsx            # Truck cards view (TARGET FOR ENHANCEMENT)
+│   ├── assignments/page.tsx      # Job assignments dashboard (COMPLETE)
+│   └── page.tsx                  # Main tracking dashboard (COMPLETE)
 ├── components/
-│   └── VehicleCard.tsx           # Flip-card component
+│   └── VehicleCard.tsx           # Flip-card component (NEEDS ENHANCEMENT)
 └── lib/
     └── gps-utils.ts              # Distance calculations
 ```
 
-## Available MCP Tools
+## Current Application Features
 
-**Filesystem**: Complete project file management
-**Analysis**: GPS calculations, performance testing
-**Web Research**: API documentation, solutions
-**Canva**: Professional presentations, diagrams
-**PDF Processing**: Documentation handling
-
-## Application Features
-
-**1. Main Dashboard (/)** - Real-time vehicle tracking table
-**2. Cards View (/cards)** - Diagnostic flip cards with Samsara data
-**3. Job Assignments (/assignments)** - NEW! FileMaker integration featuring:
+**✅ Main Dashboard (/)** - Real-time vehicle tracking table
+**✅ Job Assignments (/assignments)** - FileMaker integration featuring:
 - Vehicle-job correlations with current FileMaker fields
 - Driver communication notes (call-ahead and driver notes)
 - Job status tracking and analytics
 - Filter/search functionality (assigned/unassigned vehicles)
-- Real-time assignment monitoring with auto-refresh
+- Real-time assignment monitoring with 45-second auto-refresh
+- Professional PepMove branding (lime-500 green)
 
-## Immediate Next Actions
+**🚧 Cards View (/cards)** - Vehicle diagnostic cards (ENHANCEMENT TARGET):
+- Currently shows basic vehicle information
+- "No Assignment" placeholder needs replacement with job proximity
+- Flip animation exists but needs enhancement for Samsara diagnostics
+- Target: Rich diagnostic information on card back
 
-1. **Deploy Fix**: Push missing import fix to resolve build error
-2. **Test Job Assignments**: Verify new dashboard functionality
-3. **FileMaker Request**: Send field access request to administrator
-4. **Schedule Hygiene**: Implement monitoring once enhanced fields available
+## Development Objectives - Phase 2
+
+### Primary Goals
+1. **Enhanced Job Proximity Display**: Replace "No Assignment" with meaningful proximity information
+2. **Samsara Diagnostics Integration**: Full diagnostic data on card flip
+3. **Success Status Indicators**: Visual feedback for job completion status
+4. **Professional UI/UX**: Maintain PepMove branding standards
+
+### Technical Implementation
+1. **VehicleCard.tsx Enhancement**: Upgrade flip card component
+2. **API Data Integration**: Combine Samsara diagnostics with job correlation
+3. **Proximity Calculations**: Real-time distance calculations for job assignments
+4. **Status Logic**: Business rules for success/failure determination
+
+### User Experience Requirements
+- **Intuitive Flip Interaction**: Clear "Truck Info" button for diagnostics view
+- **Information Hierarchy**: Most important job info on front, detailed diagnostics on back
+- **Visual Status Indicators**: Color-coded success/failure states
+- **Responsive Design**: Works on desktop and mobile devices
+- **Loading States**: Smooth transitions and data loading feedback
+
+## Available MCP Tools
+
+**Filesystem**: Complete project file management and code operations
+**Analysis**: GPS calculations, performance testing, data validation
+**Web Research**: API documentation, technical solutions
+**Canva**: Professional presentations, diagrams
+**PDF Processing**: Documentation handling
 
 ## User Profile
 
@@ -104,8 +176,10 @@ C:\Projects\DispatchTracker/
 **Style**: Clear, structured solutions with professional stakeholder communication
 **Environment**: Windows PowerShell, VS Code, Git/GitHub
 
-## Recent Context
+## Recent Accomplishments
 
-Just completed Job Assignments Dashboard with FileMaker integration using available fields. Updated color scheme to match PepMove logo exactly (lime-500 #84cc16). Fixed deployment error with missing imports. Ready to deploy and test new vehicle-job correlation features.
+**Successfully Deployed**: Job Assignments Dashboard with FileMaker integration using available fields. Fixed ClipboardList icon compatibility issues. Professional lime green branding matches PepMove logo exactly. Real-time vehicle-job correlation operational with 51 vehicles.
 
-**Use this context to immediately continue development without requiring project re-explanation.**
+**Ready for**: Enhanced truck cards development with Samsara diagnostics integration and job proximity information display.
+
+**Use this context to immediately continue Phase 2 development without requiring project re-explanation.**

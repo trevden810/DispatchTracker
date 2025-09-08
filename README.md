@@ -6,7 +6,7 @@ Professional fleet management application providing real-time GPS tracking corre
 
 - **Production**: [www.pepmovetracker.info](https://www.pepmovetracker.info)
 - **Table View**: Real-time tracking dashboard
-- **Cards View**: [/cards](https://www.pepmovetracker.info/cards) - Flip-card diagnostics
+- **Cards View**: [/cards](https://www.pepmovetracker.info/cards) - Enhanced truck cards with flip diagnostics
 - **Job Assignments**: [/assignments](https://www.pepmovetracker.info/assignments) - Vehicle-job correlations
 
 ## 📊 Current Status
@@ -15,8 +15,8 @@ Professional fleet management application providing real-time GPS tracking corre
 ✅ **PepMove Branding** - Lime green (#84cc16) matching logo colors  
 ✅ **Samsara Integration** - Real-time GPS & diagnostics  
 ✅ **FileMaker Integration** - Job assignments with current fields  
-✅ **Vehicle Detail Cards** - Flip animations with comprehensive diagnostics  
 ✅ **Job Assignments Dashboard** - Driver notes, status tracking, analytics  
+🚧 **Enhanced Truck Cards** - In development: flip cards with Samsara diagnostics + job proximity  
 ⏳ **Enhanced FileMaker Fields** - Pending admin approval for schedule hygiene  
 
 ## 🛠 Tech Stack
@@ -38,13 +38,61 @@ DispatchTracker/
 │   │   ├── jobs/           # FileMaker Data API
 │   │   ├── filemaker/      # Schema discovery
 │   │   └── schedule-hygiene/ # Business logic alerts
-│   ├── cards/              # Vehicle detail cards view
+│   ├── cards/              # Enhanced truck cards view
 │   ├── assignments/        # Job assignments dashboard
 │   └── page.tsx            # Main tracking dashboard
 ├── components/
-│   └── VehicleCard.tsx     # Flip-card component
+│   └── VehicleCard.tsx     # Flip-card component with diagnostics
 └── lib/
     └── gps-utils.ts        # Distance calculations
+```
+
+## 🚗 Current Features
+
+**✅ Job Assignments Dashboard**
+- Vehicle-job correlations with FileMaker data
+- Driver communication notes display
+- Job status tracking and analytics
+- Filter/search functionality
+- Real-time assignment monitoring with 45-second auto-refresh
+
+**✅ Real-Time Tracking**
+- 51+ vehicles with GPS coordinates
+- 30-second auto-refresh intervals
+- Status: at-location, nearby, en-route, far
+- Professional PepMove branding throughout
+
+**✅ Three Dashboard Views**
+- Main table view with comprehensive tracking
+- Cards view for detailed vehicle information
+- Job assignments view for operational management
+
+## 🚧 Next Development Phase: Enhanced Truck Cards
+
+**Planned Features**:
+- **"Truck Info" Flip Button** - Card flips to reveal rich Samsara diagnostics
+- **Job Proximity Display** - Replace "No Assignment" with proximity information
+- **Job Information Integration**:
+  - Proximity distance to assigned job
+  - Job number and current status
+  - Success/failure status indicators
+  - Real-time job correlation updates
+
+**Enhanced Card Layout**:
+```
+Front Side: Basic Info + Job Proximity
+├── Vehicle name and ID
+├── Job proximity information
+├── Job number and status
+├── Success/failure indicators
+└── "Truck Info" flip button
+
+Back Side: Samsara Diagnostics
+├── Engine status and fuel levels
+├── Performance metrics
+├── Maintenance alerts
+├── Driver information
+└── Return to job view button
 ```
 
 ## 📋 Available Data
@@ -54,10 +102,14 @@ DispatchTracker/
 - `*kf*trucks_id`, `_kf_notification_id`, `_kf_client_code_id`
 - `notes_call_ahead`, `notes_driver`, `_kf_disposition`
 
-**Requested Fields** (pending admin approval):
-- `time_arival`, `time_complete` - Schedule hygiene monitoring
-- `address_C1`, `customer_C1` - GPS correlation accuracy
-- `due_date` - Deadline tracking and alerts
+**Samsara Diagnostics Available**:
+- Engine status, fuel levels, speed, odometer
+- Battery voltage, coolant temp, oil pressure
+- Maintenance schedules, driver information
+- Performance metrics and alerts
+
+**Requested FileMaker Fields** (for future schedule hygiene):
+- `time_arival`, `time_complete`, `address_C1`, `customer_C1`, `due_date`
 
 ## 🔧 Development
 
@@ -78,30 +130,6 @@ npm run dev  # Port 3002
 git push origin master  # Auto-deploys to Vercel
 ```
 
-## 🚗 Features
-
-**Real-Time Tracking**
-- 51+ vehicles with GPS coordinates
-- 30-second auto-refresh intervals
-- Status: at-location, nearby, en-route, far
-
-**Vehicle Detail Cards**
-- Flip animations (front: jobs, back: diagnostics)
-- Engine status, fuel levels, maintenance alerts
-- Driver information, performance metrics
-
-**Job Assignments Dashboard** 🆕
-- Vehicle-job correlations with FileMaker data
-- Driver communication notes display
-- Job status tracking and analytics
-- Filter/search functionality
-- Real-time assignment monitoring
-
-**Schedule Hygiene** (pending enhanced fields)
-- Flag jobs with arrival times but incomplete status
-- Alert on overdue assignments
-- Customer location accuracy validation
-
 ## 📍 Business Logic
 
 ```typescript
@@ -113,11 +141,24 @@ const assignedJob = jobs.find(job =>
   job.truckId && job.truckId.toString() === vehicle.vehicleId
 )
 
-// Schedule Hygiene Rules (when fields available)
-const hygieneIssues = jobs.filter(job => 
-  job.time_arival && 
-  !['Complete', 'Done', 'Re-scheduled', 'Attempted', 'Canceled'].includes(job.status)
-)
+// Job Success Determination
+const isJobSuccessful = (job) => {
+  const successStatuses = ['Complete', 'Done', 'Delivered', 'Successful']
+  return successStatuses.includes(job.status)
+}
+
+// Proximity Status for Cards
+const getProximityDisplay = (vehicle, assignedJob) => {
+  if (!assignedJob) return 'No Assignment'
+  
+  const distance = calculateDistance(vehicle.location, job.location)
+  return {
+    proximity: distance <= 0.5 ? 'At Location' : `${distance} mi away`,
+    jobNumber: assignedJob.id,
+    status: assignedJob.status,
+    isSuccessful: isJobSuccessful(assignedJob)
+  }
+}
 ```
 
 ## 🎯 Deployment Info
@@ -130,13 +171,19 @@ const hygieneIssues = jobs.filter(job =>
 
 ## 🧪 Testing
 
-**Immediate Test Features**:
-1. **Main Dashboard** (`/`) - Vehicle tracking table
-2. **Cards View** (`/cards`) - Diagnostic flip cards
-3. **Job Assignments** (`/assignments`) - FileMaker integration
-4. **Navigation** - Seamless between all views
-5. **Real-time Updates** - Auto-refresh functionality
-6. **Mobile Responsive** - Works on all devices
+**Current Features Working**:
+1. **Main Dashboard** (`/`) - Vehicle tracking table ✅
+2. **Cards View** (`/cards`) - Basic vehicle cards ✅
+3. **Job Assignments** (`/assignments`) - FileMaker integration ✅
+4. **Navigation** - Seamless between all views ✅
+5. **Real-time Updates** - Auto-refresh functionality ✅
+6. **Mobile Responsive** - Works on all devices ✅
+
+**Next Phase Testing**:
+- Enhanced truck card flip animations
+- Samsara diagnostics display
+- Job proximity calculations
+- Success/failure status indicators
 
 ## 📞 Contact
 
@@ -144,3 +191,8 @@ const hygieneIssues = jobs.filter(job =>
 **Company**: PepMove Logistics  
 **Location**: Aurora, Colorado (Mountain Time)  
 **Environment**: Windows PowerShell, VS Code, Git/GitHub
+
+---
+
+**Version**: 1.2.0 - Job Assignments Dashboard Complete  
+**Next**: Enhanced Truck Cards with Samsara Diagnostics + Job Proximity

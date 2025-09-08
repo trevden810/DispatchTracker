@@ -28,11 +28,16 @@ body {
 @layer components {
   /* Glass Morphism Cards */
   .glass-card {
-    @apply bg-white/95 backdrop-blur-sm border border-white/20 shadow-soft;
+    @apply bg-white/95 backdrop-blur-sm border border-white/20 shadow-lg;
   }
   
   .glass-card-dark {
-    @apply bg-pepgrey-800/95 backdrop-blur-sm border border-pepgrey-700/20 shadow-soft;
+    @apply bg-gray-800/95 backdrop-blur-sm border border-gray-700/20 shadow-lg;
+  }
+
+  /* Shadow utilities */
+  .shadow-soft {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
 
   /* Brand Buttons */
@@ -166,6 +171,7 @@ body {
 .vehicle-card-container {
   perspective: 1000px;
   height: 400px;
+  width: 100%;
 }
 
 .vehicle-card {
@@ -173,7 +179,8 @@ body {
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
-  transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transition: transform 0.8s ease-in-out;
+  cursor: default;
 }
 
 .vehicle-card.flipped {
@@ -188,15 +195,94 @@ body {
   backface-visibility: hidden;
   border-radius: 12px;
   overflow: hidden;
+  -webkit-backface-visibility: hidden; /* Safari support */
 }
 
 .vehicle-card-back {
   transform: rotateY(180deg);
 }
 
-/* Enhanced card hover for 3D effect */
-.vehicle-card-front.card-hover:hover {
-  transform: translateZ(10px) rotateX(5deg);
+/* Prevent hover effects from interfering with flip */
+.vehicle-card.flipped .vehicle-card-front.card-hover:hover {
+  transform: none;
+}
+
+/* Enhanced button styling for better click targets */
+.flip-button {
+  min-width: 120px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.flip-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Driver Status Border Animations */
+@keyframes border-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 0 0px rgba(132, 204, 22, 0.4);
+    border-color: rgb(163, 230, 53);
+  }
+  50% { 
+    box-shadow: 0 0 0 8px rgba(132, 204, 22, 0.1);
+    border-color: rgb(132, 204, 22);
+  }
+}
+
+@keyframes border-glow {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+    border-color: rgb(16, 185, 129);
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+    border-color: rgb(5, 150, 105);
+  }
+}
+
+@keyframes border-flash {
+  0%, 50%, 100% { 
+    box-shadow: 0 0 0 0px rgba(239, 68, 68, 0.4);
+    border-color: rgb(248, 113, 113);
+  }
+  25%, 75% { 
+    box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.2);
+    border-color: rgb(239, 68, 68);
+  }
+}
+
+@keyframes border-breathe {
+  0%, 100% { 
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+    border-color: rgb(96, 165, 250);
+  }
+  50% { 
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.4);
+    border-color: rgb(59, 130, 246);
+  }
+}
+
+.border-animate-pulse {
+  animation: border-pulse 2s ease-in-out infinite;
+}
+
+.border-animate-glow {
+  animation: border-glow 3s ease-in-out infinite;
+}
+
+.border-animate-flash {
+  animation: border-flash 1s ease-in-out infinite;
+}
+
+.border-animate-breathe {
+  animation: border-breathe 4s ease-in-out infinite;
 }
 
 /* Diagnostic progress bars */

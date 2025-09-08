@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { 
   Truck, MapPin, Clock, CheckCircle, AlertTriangle, Navigation,
-  Fuel, Gauge, Wrench, User, Calendar, Activity, RotateCcw
+  Fuel, Gauge, Wrench, User, Calendar, Activity
 } from 'lucide-react'
 
 interface VehicleData {
@@ -45,6 +45,14 @@ interface VehicleData {
     driverName?: string
     driverId?: string
   }
+  // Enhanced driver behavior tracking
+  driverBehavior?: {
+    isDriving: boolean // speed > 5 mph
+    isIdleAtNonJob: boolean // stopped at non-job location > 30 min
+    idleTime?: number // minutes idle
+    lastMovement?: string // timestamp of last movement
+    isOffRoute?: boolean // significantly off expected route
+  }
 }
 
 interface VehicleCardProps {
@@ -54,6 +62,106 @@ interface VehicleCardProps {
 
 export default function VehicleCard({ vehicle, className = '' }: VehicleCardProps) {
   const [isFlipped, setIsFlipped] = useState(false)
+  
+  // Debug logging
+  console.log(`Vehicle ${vehicle.vehicleName} flip state:`, isFlipped)
+
+  // Enhanced driver behavior analysis
+  const getDriverBehaviorStatus = () => {
+    const speed = vehicle.diagnostics?.speed || 0
+    const engineStatus = vehicle.diagnostics?.engineStatus || 'off'
+    const isAtJob = vehicle.proximity.isAtJob
+    const hasJob = !!vehicle.assignedJob
+    
+    // Determine driver behavior
+    const isDriving = speed > 5 && engineStatus === 'on'
+    const isIdle = speed <= 5 && engineStatus === 'on'
+    const isStopped = engineStatus === 'off' || speed === 0
+    
+    // Mock idle time calculation (in real app, this would come from backend)
+    const mockIdleTime = speed <= 5 ? Math.floor(Math.random() * 120) + 5 : 0
+    const isIdleAtNonJob = isIdle && !isAtJob && hasJob && mockIdleTime > 30
+    
+    if (isDriving) {
+      return {
+        status: 'driving',
+        label: hasJob ? 'En Route to Job' : 'Driving',
+        color: 'lime',
+        animation: 'pulse',
+        priority: 1
+      }
+    }
+    
+    if (isAtJob && hasJob) {
+      return {
+        status: 'at-job',
+        label: 'On Job Site',
+        color: 'emerald',
+        animation: 'glow',
+        priority: 1
+      }
+    }
+    
+    if (isIdleAtNonJob) {
+      return {
+        status: 'idle-non-job',
+        label: `Idle ${mockIdleTime}m`,
+        color: 'red',
+        animation: 'flash',
+        priority: 3,
+        idleTime: mockIdleTime
+      }
+    }
+    
+    if (isIdle && hasJob) {
+      return {
+        status: 'stopped-with-job',
+        label: 'Stopped',
+        color: 'amber',
+        animation: 'steady',
+        priority: 2
+      }
+    }
+    
+    if (!hasJob) {
+      return {
+        status: 'available',
+        label: 'Available',
+        color: 'blue',
+        animation: 'breathe',
+        priority: 0
+      }
+    }
+    
+    return {
+      status: 'offline',
+      label: 'Offline',
+      color: 'gray',
+      animation: 'none',
+      priority: 4
+    }
+  }
+  
+  const driverStatus = getDriverBehaviorStatus()
+  
+  const getBorderClasses = () => {
+    const base = 'border-2 transition-all duration-500'
+    
+    switch (driverStatus.status) {
+      case 'driving':
+        return `${base} border-lime-400 shadow-lime-200 border-animate-pulse`
+      case 'at-job':
+        return `${base} border-emerald-500 shadow-emerald-300 border-animate-glow`
+      case 'idle-non-job':
+        return `${base} border-red-500 shadow-red-300 border-animate-flash`
+      case 'stopped-with-job':
+        return `${base} border-amber-400 shadow-amber-200`
+      case 'available':
+        return `${base} border-blue-400 shadow-blue-200 border-animate-breathe`
+      default:
+        return `${base} border-gray-300`
+    }
+  }
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -116,8 +224,26 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
     <div className={`vehicle-card-container ${className}`}>
       <div className={`vehicle-card ${isFlipped ? 'flipped' : ''}`}>
         {/* FRONT SIDE - Main Vehicle Info */}
-        <div className="vehicle-card-front glass-card p-6 card-hover">
-          <div className="flex items-center justify-between mb-4">
+        <div className={`vehicle-card-front glass-card p-6 card-hover relative ${getBorderClasses()}`}>
+          {/* Driver Status Indicator */}
+          <div className="absolute top-2 left-2 z-10">
+            <div className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center space-x-1 ${
+              driverStatus.color === 'lime' ? 'bg-lime-100 text-lime-800 border border-lime-300' :
+              driverStatus.color === 'emerald' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
+              driverStatus.color === 'red' ? 'bg-red-100 text-red-800 border border-red-300' :
+              driverStatus.color === 'amber' ? 'bg-amber-100 text-amber-800 border border-amber-300' :
+              driverStatus.color === 'blue' ? 'bg-blue-100 text-blue-800 border border-blue-300' :
+              'bg-gray-100 text-gray-800 border border-gray-300'
+            }`}>
+              {driverStatus.color === 'lime' && <span className="h-2 w-2 bg-lime-500 rounded-full animate-pulse"></span>}
+              {driverStatus.color === 'emerald' && <span className="h-2 w-2 bg-emerald-500 rounded-full"></span>}
+              {driverStatus.color === 'red' && <span className="h-2 w-2 bg-red-500 rounded-full animate-ping"></span>}
+              {driverStatus.color === 'amber' && <span className="h-2 w-2 bg-amber-500 rounded-full"></span>}
+              {driverStatus.color === 'blue' && <span className="h-2 w-2 bg-blue-500 rounded-full animate-pulse"></span>}
+              <span>{driverStatus.label}</span>
+            </div>
+          </div>
+          <div className="flex items-center justify-between mb-4 mt-8">{/* Added mt-8 for status indicator spacing */}
             <div className="flex items-center space-x-3">
               <div className="bg-gradient-pepmove p-3 rounded-lg relative">
                 <Truck className="h-6 w-6 text-white" />
@@ -134,11 +260,15 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
             </div>
             
             <button
-              onClick={() => setIsFlipped(true)}
-              className="btn-secondary p-2 hover:bg-gray-200 transition-colors"
+              onClick={() => {
+                console.log('Gauge button clicked, flipping to diagnostics')
+                setIsFlipped(true)
+              }}
+              className="flip-button bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-3 rounded-lg transition-colors cursor-pointer flex items-center space-x-2"
               title="View diagnostics"
             >
-              <RotateCcw className="h-4 w-4" />
+              <Gauge className="h-5 w-5" />
+              <span className="text-sm font-medium">Diagnostics</span>
             </button>
           </div>
 
@@ -146,18 +276,38 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
           <div className="mb-4">
             <h4 className="text-sm font-medium text-gray-700 mb-2">Current Assignment</h4>
             {vehicle.assignedJob ? (
-              <div className="bg-lime-50 border border-lime-200 rounded-lg p-3">
+              <div className={`border rounded-lg p-3 ${
+                ['Complete', 'Done', 'Delivered', 'Successful', 'Finished', 'Accomplished', 'Completed'].includes(vehicle.assignedJob.status)
+                  ? 'bg-emerald-50 border-emerald-200' 
+                  : 'bg-lime-50 border-lime-200'
+              }`}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold text-gray-900">
+                  <span className="font-semibold text-gray-900 flex items-center">
                     Job #{vehicle.assignedJob.id}
+                    {['Complete', 'Done', 'Delivered', 'Successful', 'Finished', 'Accomplished', 'Completed'].includes(vehicle.assignedJob.status) && (
+                      <CheckCircle className="h-4 w-4 ml-2 text-emerald-600" />
+                    )}
                   </span>
                   <span className="text-sm text-gray-600">
                     {vehicle.assignedJob.type}
                   </span>
                 </div>
-                <p className="text-sm text-gray-700 mb-2">
-                  Status: {vehicle.assignedJob.status}
-                </p>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-700">
+                    Status: <span className={`font-medium ${
+                      ['Complete', 'Done', 'Delivered', 'Successful', 'Finished', 'Accomplished', 'Completed'].includes(vehicle.assignedJob.status)
+                        ? 'text-emerald-700' 
+                        : 'text-lime-700'
+                    }`}>{vehicle.assignedJob.status}</span>
+                  </span>
+                  {vehicle.proximity.distance !== undefined && (
+                    <span className={`text-sm font-medium ${
+                      vehicle.proximity.isAtJob ? 'text-emerald-600' : 'text-gray-600'
+                    }`}>
+                      {vehicle.proximity.isAtJob ? '📍 On Location' : `${formatDistance(vehicle.proximity.distance)} away`}
+                    </span>
+                  )}
+                </div>
                 {vehicle.assignedJob.estimatedLocation && (
                   <p className="text-xs text-gray-500 truncate">
                     📍 {vehicle.assignedJob.estimatedLocation.address}
@@ -165,8 +315,12 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
                 )}
               </div>
             ) : (
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
-                <p className="text-gray-400 italic text-sm">No assignment</p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-center">
+                <div className="flex items-center justify-center mb-1">
+                  <Navigation className="h-4 w-4 text-blue-600 mr-2" />
+                  <span className="text-blue-700 font-medium text-sm">Available for Dispatch</span>
+                </div>
+                <p className="text-blue-600 text-xs">Ready for new assignment</p>
               </div>
             )}
           </div>
@@ -213,26 +367,30 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
         </div>
 
         {/* BACK SIDE - Detailed Diagnostics */}
-        <div className="vehicle-card-back glass-card p-6">
+        <div className={`vehicle-card-back glass-card p-6 relative ${getBorderClasses()}`}>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
-              <div className="bg-gradient-pepgrey p-3 rounded-lg">
+              <div className="bg-gradient-to-r from-gray-600 to-gray-700 p-3 rounded-lg">
                 <Gauge className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-pepgrey-900">
+                <h3 className="text-lg font-semibold text-gray-900">
                   Vehicle Diagnostics
                 </h3>
-                <p className="text-sm text-pepgrey-500">{vehicle.vehicleName}</p>
+                <p className="text-sm text-gray-500">{vehicle.vehicleName}</p>
               </div>
             </div>
             
             <button
-              onClick={() => setIsFlipped(false)}
-              className="btn-secondary p-2 hover:bg-pepgrey-200 transition-colors"
+              onClick={() => {
+                console.log('Truck button clicked, flipping to main view')
+                setIsFlipped(false)
+              }}
+              className="flip-button bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-3 rounded-lg transition-colors cursor-pointer flex items-center space-x-2"
               title="Back to main view"
             >
-              <RotateCcw className="h-4 w-4 rotate-180" />
+              <Truck className="h-5 w-5" />
+              <span className="text-sm font-medium">Back</span>
             </button>
           </div>
 
@@ -240,14 +398,14 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
             <div className="space-y-4">
               {/* Engine & Performance */}
               <div>
-                <h4 className="text-sm font-semibold text-pepgrey-700 mb-3 flex items-center">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
                   <Activity className="h-4 w-4 mr-2" />
                   Engine & Performance
                 </h4>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="bg-white/50 rounded-lg p-3">
                     <div className="flex justify-between">
-                      <span className="text-pepgrey-600">Status:</span>
+                      <span className="text-gray-600">Status:</span>
                       <span className={`font-medium capitalize ${getEngineStatusColor(vehicle.diagnostics.engineStatus)}`}>
                         {vehicle.diagnostics.engineStatus}
                       </span>
@@ -255,24 +413,24 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
                   </div>
                   <div className="bg-white/50 rounded-lg p-3">
                     <div className="flex justify-between">
-                      <span className="text-pepgrey-600">Speed:</span>
-                      <span className="font-medium text-pepgrey-900">
+                      <span className="text-gray-600">Speed:</span>
+                      <span className="font-medium text-gray-900">
                         {vehicle.diagnostics.speed} mph
                       </span>
                     </div>
                   </div>
                   <div className="bg-white/50 rounded-lg p-3">
                     <div className="flex justify-between">
-                      <span className="text-pepgrey-600">Engine Hours:</span>
-                      <span className="font-medium text-pepgrey-900">
+                      <span className="text-gray-600">Engine Hours:</span>
+                      <span className="font-medium text-gray-900">
                         {vehicle.diagnostics.engineHours.toLocaleString()}
                       </span>
                     </div>
                   </div>
                   <div className="bg-white/50 rounded-lg p-3">
                     <div className="flex justify-between">
-                      <span className="text-pepgrey-600">Odometer:</span>
-                      <span className="font-medium text-pepgrey-900">
+                      <span className="text-gray-600">Odometer:</span>
+                      <span className="font-medium text-gray-900">
                         {vehicle.diagnostics.odometer.toLocaleString()} mi
                       </span>
                     </div>
@@ -282,14 +440,14 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
 
               {/* Fluid Levels & Vitals */}
               <div>
-                <h4 className="text-sm font-semibold text-pepgrey-700 mb-3 flex items-center">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
                   <Fuel className="h-4 w-4 mr-2" />
                   Fluid Levels & Vitals
                 </h4>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="bg-white/50 rounded-lg p-3">
                     <div className="flex justify-between">
-                      <span className="text-pepgrey-600">Fuel Level:</span>
+                      <span className="text-gray-600">Fuel Level:</span>
                       <span className={`font-medium ${getFuelLevelColor(vehicle.diagnostics.fuelLevel)}`}>
                         {vehicle.diagnostics.fuelLevel}%
                       </span>
@@ -297,24 +455,24 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
                   </div>
                   <div className="bg-white/50 rounded-lg p-3">
                     <div className="flex justify-between">
-                      <span className="text-pepgrey-600">Battery:</span>
-                      <span className="font-medium text-pepgrey-900">
+                      <span className="text-gray-600">Battery:</span>
+                      <span className="font-medium text-gray-900">
                         {vehicle.diagnostics.batteryVoltage}V
                       </span>
                     </div>
                   </div>
                   <div className="bg-white/50 rounded-lg p-3">
                     <div className="flex justify-between">
-                      <span className="text-pepgrey-600">Coolant:</span>
-                      <span className="font-medium text-pepgrey-900">
+                      <span className="text-gray-600">Coolant:</span>
+                      <span className="font-medium text-gray-900">
                         {vehicle.diagnostics.coolantTemp}°F
                       </span>
                     </div>
                   </div>
                   <div className="bg-white/50 rounded-lg p-3">
                     <div className="flex justify-between">
-                      <span className="text-pepgrey-600">Oil Pressure:</span>
-                      <span className="font-medium text-pepgrey-900">
+                      <span className="text-gray-600">Oil Pressure:</span>
+                      <span className="font-medium text-gray-900">
                         {vehicle.diagnostics.oilPressure} psi
                       </span>
                     </div>
@@ -324,7 +482,7 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
 
               {/* Driver & Maintenance */}
               <div>
-                <h4 className="text-sm font-semibold text-pepgrey-700 mb-3 flex items-center">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
                   <User className="h-4 w-4 mr-2" />
                   Driver & Maintenance
                 </h4>
@@ -332,8 +490,8 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
                   {vehicle.diagnostics.driverName && (
                     <div className="bg-white/50 rounded-lg p-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-pepgrey-600">Current Driver:</span>
-                        <span className="font-medium text-pepgrey-900">
+                        <span className="text-gray-600">Current Driver:</span>
+                        <span className="font-medium text-gray-900">
                           {vehicle.diagnostics.driverName}
                         </span>
                       </div>
@@ -344,11 +502,11 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
                     {vehicle.diagnostics.lastMaintenance && (
                       <div className="bg-white/50 rounded-lg p-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-pepgrey-600 flex items-center">
+                          <span className="text-gray-600 flex items-center">
                             <Wrench className="h-3 w-3 mr-1" />
                             Last Service:
                           </span>
-                          <span className="font-medium text-pepgrey-900 text-sm">
+                          <span className="font-medium text-gray-900 text-sm">
                             {vehicle.diagnostics.lastMaintenance}
                           </span>
                         </div>
@@ -374,11 +532,11 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
             </div>
           ) : (
             <div className="text-center py-8">
-              <Gauge className="h-12 w-12 text-pepgrey-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-pepgrey-500 mb-2">
+              <Gauge className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-500 mb-2">
                 No Diagnostics Available
               </h3>
-              <p className="text-pepgrey-400">
+              <p className="text-gray-400">
                 Diagnostic data not available for this vehicle
               </p>
             </div>

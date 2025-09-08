@@ -66,26 +66,77 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
   // Debug logging
   console.log(`Vehicle ${vehicle.vehicleName} flip state:`, isFlipped)
 
-  // Enhanced driver behavior analysis
+  // Enhanced driver behavior analysis based on REAL Samsara data
   const getDriverBehaviorStatus = () => {
     const speed = vehicle.diagnostics?.speed || 0
-    const engineStatus = vehicle.diagnostics?.engineStatus || 'off'
+    const engineStatus = vehicle.diagnostics?.engineStatus || 'unknown'
     const isAtJob = vehicle.proximity.isAtJob
     const hasJob = !!vehicle.assignedJob
     
-    // Determine driver behavior
-    const isDriving = speed > 5 && engineStatus === 'on'
-    const isIdle = speed <= 5 && engineStatus === 'on'
+    // Debug logging for real data
+    console.log(`🚛 ${vehicle.vehicleName} Status Analysis:`, {
+      speed,
+      engineStatus,
+      isAtJob,
+      hasJob,
+      lastUpdated: vehicle.lastUpdated,
+      hasEngineData: engineStatus !== 'unknown'
+    })
+    
+    // Handle cases where engine data is not available
+    if (engineStatus === 'unknown' || engineStatus === 'off') {
+      // Fall back to GPS-based status when engine data unavailable
+      if (speed > 5) {
+        return {
+          status: 'driving',
+          label: hasJob ? 'En Route (GPS)' : 'Moving (GPS)',
+          color: 'lime',
+          animation: 'pulse',
+          priority: 1
+        }
+      } else if (speed > 0) {
+        return {
+          status: 'slow-moving',
+          label: 'Slow Speed',
+          color: 'amber',
+          animation: 'steady',
+          priority: 2
+        }
+      } else {
+        return {
+          status: 'stationary',
+          label: hasJob ? 'Stationary (Job)' : 'Parked',
+          color: 'gray',
+          animation: 'none',
+          priority: 4
+        }
+      }
+    }
+    
+    // Determine driver behavior based on REAL Samsara engine state
+    const isDriving = speed > 5 && (engineStatus === 'on')
+    const isIdle = speed <= 5 && (engineStatus === 'on' || engineStatus === 'idle')
     const isStopped = engineStatus === 'off' || speed === 0
     
-    // Mock idle time calculation (in real app, this would come from backend)
+    // Mock idle time calculation (replace with real backend calculation)
     const mockIdleTime = speed <= 5 ? Math.floor(Math.random() * 120) + 5 : 0
     const isIdleAtNonJob = isIdle && !isAtJob && hasJob && mockIdleTime > 30
     
-    if (isDriving) {
+    // Priority-based status determination
+    if (isDriving && hasJob) {
       return {
         status: 'driving',
-        label: hasJob ? 'En Route to Job' : 'Driving',
+        label: 'En Route to Job',
+        color: 'lime',
+        animation: 'pulse',
+        priority: 1
+      }
+    }
+    
+    if (isDriving && !hasJob) {
+      return {
+        status: 'driving',
+        label: 'Driving',
         color: 'lime',
         animation: 'pulse',
         priority: 1
@@ -105,7 +156,7 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
     if (isIdleAtNonJob) {
       return {
         status: 'idle-non-job',
-        label: `Idle ${mockIdleTime}m`,
+        label: `Idle Alert ${mockIdleTime}m`,
         color: 'red',
         animation: 'flash',
         priority: 3,
@@ -116,14 +167,24 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
     if (isIdle && hasJob) {
       return {
         status: 'stopped-with-job',
-        label: 'Stopped',
+        label: 'Stopped (Job)',
         color: 'amber',
         animation: 'steady',
         priority: 2
       }
     }
     
-    if (!hasJob) {
+    if (engineStatus === 'off' && hasJob) {
+      return {
+        status: 'offline-with-job',
+        label: 'Engine Off',
+        color: 'gray',
+        animation: 'none',
+        priority: 4
+      }
+    }
+    
+    if (!hasJob && (engineStatus === 'on' || engineStatus === 'idle')) {
       return {
         status: 'available',
         label: 'Available',
@@ -133,6 +194,7 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
       }
     }
     
+    // Default offline state
     return {
       status: 'offline',
       label: 'Offline',

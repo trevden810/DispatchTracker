@@ -44,6 +44,12 @@ interface VehicleData {
     nextMaintenance?: string
     driverName?: string
     driverId?: string
+    lastGpsTime?: string
+    lastEngineTime?: string
+    isEngineDataStale?: boolean
+    isGpsDataStale?: boolean
+    hasEngineData?: boolean
+    hasGpsData?: boolean
   }
   // Enhanced driver behavior tracking
   driverBehavior?: {

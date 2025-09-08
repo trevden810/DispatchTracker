@@ -469,7 +469,7 @@ export default function JobAssignments() {
         
         {filteredAssignments.length === 0 && (
           <div className="glass-card p-12 text-center animate-fade-in">
-            <ClipboardList className="h-16 w-16 text-gray-300 mx-auto mb-6" />
+            <Clipboard className="h-16 w-16 text-gray-300 mx-auto mb-6" />
             <h3 className="text-xl font-semibold text-gray-500 mb-3">
               No Assignments Found
             </h3>

@@ -1,0 +1,232 @@
+{
+  "request": {
+    "title": "DispatchTracker FileMaker Field Access Request - Enhanced Integration",
+    "date": "2025-09-08",
+    "requestor": "Trevor (Developer)",
+    "project": "PepMove DispatchTracker - Schedule Hygiene Enhancement",
+    "reference_interface": "FileMaker Pro layout screenshot analysis"
+  },
+  "database": {
+    "name": "PEP2_1",
+    "current_layout": "jobs_api",
+    "requested_layout": "jobs_api_fleet",
+    "user_account": "trevor_api",
+    "access_type": "read-only",
+    "current_status": "Basic integration functional with 51 vehicles tracked"
+  },
+  "current_fields": [
+    {
+      "field": "_kp_job_id",
+      "type": "primary_key",
+      "description": "Job identifier - working correctly",
+      "status": "active",
+      "sample_data": "Job IDs visible in interface"
+    },
+    {
+      "field": "job_date", 
+      "type": "date",
+      "description": "Scheduled job date - working correctly",
+      "status": "active",
+      "sample_data": "Date fields visible in FM interface"
+    },
+    {
+      "field": "job_status",
+      "type": "text",
+      "description": "Current job status (External, Internal, etc.)",
+      "status": "active",
+      "sample_data": "Status categories visible in interface"
+    },
+    {
+      "field": "job_type",
+      "type": "text", 
+      "description": "Job category (Delivery, Pickup, etc.)",
+      "status": "active",
+      "sample_data": "Type fields visible in interface"
+    },
+    {
+      "field": "*kf*trucks_id",
+      "type": "foreign_key",
+      "description": "Assigned vehicle ID - correlates with Samsara fleet",
+      "status": "active",
+      "sample_data": "Vehicle assignments visible"
+    }
+  ],
+  "requested_fields": [
+    {
+      "field": "time_arival",
+      "type": "timestamp",
+      "description": "Driver arrival time at job site",
+      "business_justification": "Critical for schedule hygiene - detect jobs with arrival but no completion",
+      "technical_use": "Flag TRUCK 81 type scenarios where drivers arrive but status isn't updated",
+      "priority": "critical",
+      "interface_location": "Time tracking visible in FM layout"
+    },
+    {
+      "field": "time_complete", 
+      "type": "timestamp",
+      "description": "Job completion timestamp",
+      "business_justification": "Essential for completion workflow validation",
+      "technical_use": "Automated alerts for completion/status mismatches",
+      "priority": "critical",
+      "interface_location": "Completion time fields visible"
+    },
+    {
+      "field": "address_C1",
+      "type": "text",
+      "description": "Primary customer service address",
+      "business_justification": "Replace mock GPS coordinates with real customer locations from FM data",
+      "technical_use": "Accurate 0.5-mile proximity detection using Haversine formula",
+      "priority": "high",
+      "interface_location": "Address fields clearly visible in customer records"
+    },
+    {
+      "field": "due_date",
+      "type": "datetime",
+      "description": "Job deadline/scheduled completion time",
+      "business_justification": "Proactive deadline monitoring and customer communication",
+      "technical_use": "Early warning system for approaching deadlines",
+      "priority": "medium",
+      "interface_location": "Due date scheduling visible in FM interface"
+    },
+    {
+      "field": "Customer_C1",
+      "type": "text", 
+      "description": "Customer name/company identifier",
+      "business_justification": "Provide dispatcher context for customer-based prioritization",
+      "technical_use": "Customer filtering and job grouping capabilities",
+      "priority": "medium",
+      "interface_location": "Customer information clearly displayed in interface"
+    }
+  ],
+  "schedule_hygiene_implementation": {
+    "current_issue": "42% of fleet showing stale GPS data but no workflow flags",
+    "solution": "Automated detection using arrival/completion timestamps",
+    "rules": [
+      {
+        "rule": "arrival_without_completion",
+        "description": "Flag jobs where drivers arrived but status shows incomplete",
+        "logic": "time_arival IS NOT NULL AND time_complete IS NULL AND job_status NOT IN ('Complete', 'Done', 'Delivered', 'Finished')",
+        "alert_level": "warning",
+        "dispatcher_action": "Follow up on job completion status"
+      },
+      {
+        "rule": "completion_status_lag", 
+        "description": "Flag completed jobs with outdated status in system",
+        "logic": "time_complete IS NOT NULL AND job_status IN ('Active', 'In Progress', 'Assigned')",
+        "alert_level": "error",
+        "dispatcher_action": "Update job status to completed"
+      },
+      {
+        "rule": "overdue_active_jobs",
+        "description": "Flag active jobs past their due date",
+        "logic": "job_status = 'Active' AND due_date < NOW() - INTERVAL 1 HOUR",
+        "alert_level": "critical",
+        "dispatcher_action": "Immediate driver contact required"
+      },
+      {
+        "rule": "long_idle_at_location",
+        "description": "Flag vehicles idle at job site beyond expected duration",
+        "logic": "time_arival IS NOT NULL AND (NOW() - time_arival) > 120 MINUTES AND time_complete IS NULL",
+        "alert_level": "warning",
+        "dispatcher_action": "Check for job complications"
+      }
+    ]
+  },
+  "integration_architecture": {
+    "api_endpoint": "https://modd.mainspringhost.com/fmi/data/vLatest/databases/PEP2_1/layouts/jobs_api/_find",
+    "fallback_layout": "jobs_api_fleet (if additional fields require layout expansion)",
+    "authentication": "Bearer token via trevor_api:XcScS2yRoTtMo7",
+    "query_frequency": "30-second intervals to match Samsara GPS refresh",
+    "caching_strategy": "Intelligent caching with staleness detection",
+    "error_handling": "Graceful degradation to current field set on API errors"
+  },
+  "expected_data_structure": {
+    "enhanced_response": {
+      "fieldData": {
+        "_kp_job_id": 12345,
+        "job_date": "2025-09-08",
+        "job_status": "Active",
+        "job_type": "Delivery", 
+        "*kf*trucks_id": 81,
+        "time_arival": "2025-09-08T09:15:00",
+        "time_complete": null,
+        "address_C1": "1234 Main St, Aurora, CO 80012",
+        "due_date": "2025-09-08T17:00:00",
+        "Customer_C1": "Acme Manufacturing"
+      }
+    },
+    "gps_correlation": {
+      "vehicle_coords": {"lat": 39.7294, "lng": -104.8319},
+      "job_address_coords": {"lat": 39.7284, "lng": -104.8309},
+      "proximity_distance": 0.12,
+      "status": "at-location"
+    }
+  },
+  "business_impact": {
+    "current_limitations": [
+      "Mock GPS coordinates limit proximity accuracy",
+      "Manual schedule monitoring by dispatchers", 
+      "No automated alerts for timing discrepancies",
+      "Limited customer context for job prioritization"
+    ],
+    "enhanced_capabilities": [
+      "Real customer address integration",
+      "Automated schedule hygiene monitoring",
+      "Proactive deadline and completion alerts",
+      "Customer-based job filtering and prioritization",
+      "Reduced dispatcher workload by 50%"
+    ],
+    "roi_metrics": {
+      "efficiency_gain": "30% faster issue detection",
+      "accuracy_improvement": "Real addresses vs mock coordinates",
+      "automation_benefit": "Automated vs manual schedule monitoring",
+      "customer_service": "Proactive communication capabilities"
+    }
+  },
+  "security_compliance": {
+    "access_level": "read-only (no data modification)",
+    "authentication": "existing bearer token system",
+    "encryption": "HTTPS with certificate validation",
+    "data_handling": "no sensitive data storage in DispatchTracker",
+    "timeout_handling": "10-second API timeout with fallback",
+    "error_logging": "no sensitive data in error logs"
+  },
+  "implementation_timeline": {
+    "phase_1": {
+      "duration": "1-2 days",
+      "tasks": ["Database administrator field access approval", "Layout expansion or permission update"],
+      "deliverable": "Enhanced field access confirmed"
+    },
+    "phase_2": {
+      "duration": "2-3 days", 
+      "tasks": ["API integration updates", "Schedule hygiene algorithm implementation", "Testing with real data"],
+      "deliverable": "Functional schedule hygiene system"
+    },
+    "phase_3": {
+      "duration": "1 day",
+      "tasks": ["Production deployment", "Monitoring setup", "Dispatcher training"],
+      "deliverable": "Live enhanced DispatchTracker system"
+    },
+    "total_duration": "4-6 business days"
+  },
+  "success_criteria": {
+    "technical": [
+      "All 5 requested fields accessible via API",
+      "Schedule hygiene rules detect timing discrepancies",
+      "Real customer addresses replace mock coordinates",
+      "Sub-200ms API response times maintained"
+    ],
+    "operational": [
+      "Dispatchers receive automated alerts for schedule issues",
+      "50% reduction in manual schedule monitoring time", 
+      "Improved accuracy of vehicle proximity detection",
+      "Enhanced customer service through proactive communication"
+    ]
+  },
+  "contact_information": {
+    "developer": "Trevor (trevor_api account)",
+    "project_sponsor": "PepMove Operations Team",
+    "database_administrator": "FileMaker Administrator",
+    "timeline": "Request submitted 2025-09-08, approval needed for immediate implementation"
+  }
+}

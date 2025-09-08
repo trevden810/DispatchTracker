@@ -463,7 +463,7 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
               </p>
               <div className="text-xs text-gray-400">
                 {vehicle.diagnostics?.isGpsDataStale ? (
-                  <span className="text-red-600">⚠️ GPS data stale (>30min)</span>
+                  <span className="text-red-600">⚠️ GPS data stale (&gt;30min)</span>
                 ) : vehicle.diagnostics?.isEngineDataStale ? (
                   <span className="text-amber-600">⚠️ Engine data stale</span>
                 ) : vehicle.diagnostics?.engineStatus === 'unknown' ? (

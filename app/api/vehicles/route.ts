@@ -34,7 +34,10 @@ async function fetchVehicleStats() {
     const response = await fetch(`${statsUrl}?${params}`, {
       headers: {
         'Authorization': `Bearer ${SAMSARA_CONFIG.token}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
       },
       signal: AbortSignal.timeout(10000) // 10 second timeout
     })
@@ -64,7 +67,24 @@ export async function GET() {
     const vehicles: Vehicle[] = vehicleStats.map((vehicle: any) => {
       // Extract current engine state (handle missing data gracefully)
       const engineState = vehicle.engineStates?.value || null
-      const engineStatus = engineState ? engineState.toLowerCase() : 'unknown'
+      const engineTimestamp = vehicle.engineStates?.time || null
+      
+      // Check if engine data is stale (older than 2 hours)
+      let engineStatus = 'unknown'
+      let isEngineDataStale = false
+      
+      if (engineState && engineTimestamp) {
+        const engineAge = (new Date().getTime() - new Date(engineTimestamp).getTime()) / (1000 * 60) // minutes
+        isEngineDataStale = engineAge > 120 // More than 2 hours old
+        
+        if (!isEngineDataStale) {
+          engineStatus = engineState.toLowerCase()
+        }
+        
+        console.log(`🚛 ${vehicle.name}: Engine=${engineState} (${Math.round(engineAge)}min ago, ${isEngineDataStale ? 'STALE' : 'fresh'})`)
+      } else {
+        console.log(`🚛 ${vehicle.name}: No engine data available`)
+      }
       const gpsData = vehicle.gps
       const location = gpsData ? {
         lat: gpsData.latitude,

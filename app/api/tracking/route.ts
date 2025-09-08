@@ -40,6 +40,11 @@ interface TrackingData {
     driverName?: string
     driverId?: string
     lastGpsTime?: string
+    lastEngineTime?: string
+    isEngineDataStale?: boolean
+    isGpsDataStale?: boolean
+    hasEngineData?: boolean
+    hasGpsData?: boolean
   }
 }
 
@@ -56,7 +61,10 @@ async function fetchVehiclesWithDiagnostics() {
     const response = await fetch(`${statsUrl}?${params}`, {
       headers: {
         'Authorization': `Bearer ${process.env.SAMSARA_API_TOKEN}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
       },
       signal: AbortSignal.timeout(10000)
     })
@@ -69,30 +77,60 @@ async function fetchVehiclesWithDiagnostics() {
     console.log(`📊 Retrieved real-time stats for ${data.data?.length || 0} vehicles`)
     
     return data.data?.map((vehicle: any) => {
-      // Extract real-time engine state
-      const engineState = vehicle.engineStates?.value || 'Off'
-      const engineStatus = engineState.toLowerCase() === 'on' ? 'on' : 
-                          (engineState.toLowerCase() === 'idle' ? 'idle' : 'off')
+      // Extract real-time engine state with timestamp validation
+      const engineState = vehicle.engineStates?.value || null
+      const engineTimestamp = vehicle.engineStates?.time || null
       
-      // Extract GPS data
+      // Check if engine data is stale (older than 2 hours)
+      let engineStatus = 'unknown'
+      let isEngineDataStale = false
+      
+      if (engineState && engineTimestamp) {
+        const engineAge = (new Date().getTime() - new Date(engineTimestamp).getTime()) / (1000 * 60) // minutes
+        isEngineDataStale = engineAge > 120 // More than 2 hours old
+        
+        if (!isEngineDataStale) {
+          engineStatus = engineState.toLowerCase() === 'on' ? 'on' : 
+                        (engineState.toLowerCase() === 'idle' ? 'idle' : 'off')
+        }
+        
+        console.log(`🚛 ${vehicle.name}: Engine=${engineState} (${Math.round(engineAge)}min ago, ${isEngineDataStale ? 'STALE' : 'fresh'})`)
+      } else {
+        console.log(`🚛 ${vehicle.name}: No engine data available`)
+      }
+      
+      // Extract GPS data with timestamp validation
       const gpsData = vehicle.gps
+      let isGpsDataStale = false
+      let currentSpeed = 0
+      
+      if (gpsData && gpsData.time) {
+        const gpsAge = (new Date().getTime() - new Date(gpsData.time).getTime()) / (1000 * 60) // minutes
+        isGpsDataStale = gpsAge > 30 // More than 30 minutes old
+        
+        if (!isGpsDataStale) {
+          currentSpeed = gpsData.speedMilesPerHour || 0
+        }
+        
+        console.log(`📍 ${vehicle.name}: GPS speed=${gpsData.speedMilesPerHour}mph (${Math.round(gpsAge)}min ago, ${isGpsDataStale ? 'STALE' : 'fresh'})`)
+      } else {
+        console.log(`📍 ${vehicle.name}: No GPS data available`)
+      }
+      
       const location = gpsData ? {
         lat: gpsData.latitude,
         lng: gpsData.longitude,
         address: gpsData.reverseGeo?.formattedLocation
       } : null
       
-      // Extract real-time speed
-      const currentSpeed = gpsData?.speedMilesPerHour || 0
-      
-      // Extract fuel level
-      const fuelLevel = vehicle.fuelPercents?.value || 0
-      
       // Extract odometer (convert from meters to miles)
       const odometerMeters = vehicle.obdOdometerMeters?.value || 0
       const odometerMiles = Math.round(odometerMeters * 0.000621371)
       
-      console.log(`🚛 ${vehicle.name}: Engine=${engineState}, Speed=${currentSpeed}mph, Fuel=${fuelLevel}%`)
+      // Extract fuel level
+      const fuelLevel = vehicle.fuelPercents?.value || 0
+      
+      console.log(`📊 ${vehicle.name}: Final Status - Speed=${currentSpeed}mph, Fuel=${fuelLevel}%, Engine=${engineStatus}, GPS=${isGpsDataStale ? 'stale' : 'fresh'}, Engine=${isEngineDataStale ? 'stale' : engineStatus !== 'unknown' ? 'fresh' : 'none'}`)
       
       return {
         id: vehicle.id,
@@ -100,7 +138,6 @@ async function fetchVehiclesWithDiagnostics() {
         status: engineStatus === 'on' ? (currentSpeed > 5 ? 'driving' : 'idle') : 'offline',
         location: location,
         last_updated: new Date().toISOString(),
-        // Real-time diagnostics from Samsara
         diagnostics: {
           engineStatus: engineStatus,
           fuelLevel: fuelLevel,
@@ -114,7 +151,12 @@ async function fetchVehiclesWithDiagnostics() {
           nextMaintenance: Math.random() > 0.7 ? '2025-09-20' : undefined,
           driverName: Math.random() > 0.3 ? `Driver ${Math.floor(Math.random() * 20) + 1}` : undefined,
           driverId: `D${Math.floor(Math.random() * 1000) + 100}`,
-          lastGpsTime: gpsData?.time || new Date().toISOString()
+          lastGpsTime: gpsData?.time || new Date().toISOString(),
+          lastEngineTime: engineTimestamp,
+          isEngineDataStale: isEngineDataStale,
+          isGpsDataStale: isGpsDataStale,
+          hasEngineData: !!engineState,
+          hasGpsData: !!gpsData
         }
       }
     }) || []

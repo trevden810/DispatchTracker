@@ -80,7 +80,11 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
       isAtJob,
       hasJob,
       lastUpdated: vehicle.lastUpdated,
-      hasEngineData: engineStatus !== 'unknown'
+      hasEngineData: engineStatus !== 'unknown',
+      isEngineDataStale: vehicle.diagnostics?.isEngineDataStale,
+      isGpsDataStale: vehicle.diagnostics?.isGpsDataStale,
+      lastEngineTime: vehicle.diagnostics?.lastEngineTime,
+      lastGpsTime: vehicle.diagnostics?.lastGpsTime
     })
     
     // Mock idle time calculation (replace with real backend calculation)
@@ -88,8 +92,29 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
     
     // Priority-based status determination with explicit engine status handling
     
-    // Handle driving state
-    if (speed > 5 && engineStatus === 'on') {
+    // Handle stale GPS data - very important!
+    if (vehicle.diagnostics?.isGpsDataStale) {
+      if (hasJob) {
+        return {
+          status: 'stale-data-job',
+          label: 'Last Known Location',
+          color: 'gray',
+          animation: 'none',
+          priority: 5
+        }
+      } else {
+        return {
+          status: 'stale-data',
+          label: 'GPS Data Stale',
+          color: 'gray',
+          animation: 'none',
+          priority: 5
+        }
+      }
+    }
+    
+    // Handle driving state (check for stale engine data)
+    if (speed > 5 && engineStatus === 'on' && !vehicle.diagnostics?.isEngineDataStale) {
       return {
         status: 'driving',
         label: hasJob ? 'En Route to Job' : 'Driving',
@@ -99,8 +124,8 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
       }
     }
     
-    // Handle GPS-based driving fallback
-    if (speed > 5 && (engineStatus === 'unknown' || engineStatus === 'off')) {
+    // Handle GPS-based driving fallback (engine data unknown or stale)
+    if (speed > 5 && (engineStatus === 'unknown' || engineStatus === 'off' || vehicle.diagnostics?.isEngineDataStale)) {
       return {
         status: 'driving',
         label: hasJob ? 'En Route (GPS)' : 'Moving (GPS)',
@@ -431,10 +456,14 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
                 Last updated: {new Date(vehicle.lastUpdated).toLocaleTimeString()}
               </p>
               <div className="text-xs text-gray-400">
-                {vehicle.diagnostics?.engineStatus === 'unknown' ? (
+                {vehicle.diagnostics?.isGpsDataStale ? (
+                  <span className="text-red-600">⚠️ GPS data stale (>30min)</span>
+                ) : vehicle.diagnostics?.isEngineDataStale ? (
+                  <span className="text-amber-600">⚠️ Engine data stale</span>
+                ) : vehicle.diagnostics?.engineStatus === 'unknown' ? (
                   <span>GPS data only</span>
                 ) : (
-                  <span>Engine + GPS data</span>
+                  <span>Live engine + GPS</span>
                 )}
               </div>
             </div>

@@ -83,66 +83,34 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
       hasEngineData: engineStatus !== 'unknown'
     })
     
-    // Handle cases where engine data is not available
-    if (engineStatus === 'unknown' || engineStatus === 'off') {
-      // Fall back to GPS-based status when engine data unavailable
-      if (speed > 5) {
-        return {
-          status: 'driving',
-          label: hasJob ? 'En Route (GPS)' : 'Moving (GPS)',
-          color: 'lime',
-          animation: 'pulse',
-          priority: 1
-        }
-      } else if (speed > 0) {
-        return {
-          status: 'slow-moving',
-          label: 'Slow Speed',
-          color: 'amber',
-          animation: 'steady',
-          priority: 2
-        }
-      } else {
-        return {
-          status: 'stationary',
-          label: hasJob ? 'Stationary (Job)' : 'Parked',
-          color: 'gray',
-          animation: 'none',
-          priority: 4
-        }
-      }
-    }
-    
-    // Determine driver behavior based on REAL Samsara engine state
-    const isDriving = speed > 5 && engineStatus === 'on'
-    const isIdle = speed <= 5 && (engineStatus === 'on' || engineStatus === 'idle')
-    const isStopped = (engineStatus === 'off' || engineStatus === 'unknown') || speed === 0
-    
     // Mock idle time calculation (replace with real backend calculation)
     const mockIdleTime = speed <= 5 ? Math.floor(Math.random() * 120) + 5 : 0
-    const isIdleAtNonJob = isIdle && !isAtJob && hasJob && mockIdleTime > 30
     
-    // Priority-based status determination
-    if (isDriving && hasJob) {
+    // Priority-based status determination with explicit engine status handling
+    
+    // Handle driving state
+    if (speed > 5 && engineStatus === 'on') {
       return {
         status: 'driving',
-        label: 'En Route to Job',
+        label: hasJob ? 'En Route to Job' : 'Driving',
         color: 'lime',
         animation: 'pulse',
         priority: 1
       }
     }
     
-    if (isDriving && !hasJob) {
+    // Handle GPS-based driving fallback
+    if (speed > 5 && (engineStatus === 'unknown' || engineStatus === 'off')) {
       return {
         status: 'driving',
-        label: 'Driving',
+        label: hasJob ? 'En Route (GPS)' : 'Moving (GPS)',
         color: 'lime',
         animation: 'pulse',
         priority: 1
       }
     }
     
+    // Handle at job site
     if (isAtJob && hasJob) {
       return {
         status: 'at-job',
@@ -153,7 +121,8 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
       }
     }
     
-    if (isIdleAtNonJob) {
+    // Handle idle alerts (engine on, not at job, long idle time)
+    if (speed <= 5 && (engineStatus === 'on' || engineStatus === 'idle') && !isAtJob && hasJob && mockIdleTime > 30) {
       return {
         status: 'idle-non-job',
         label: `Idle Alert ${mockIdleTime}m`,
@@ -164,7 +133,8 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
       }
     }
     
-    if (isIdle && hasJob) {
+    // Handle stopped with job (engine on/idle)
+    if (speed <= 5 && (engineStatus === 'on' || engineStatus === 'idle') && hasJob) {
       return {
         status: 'stopped-with-job',
         label: 'Stopped (Job)',
@@ -174,6 +144,7 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
       }
     }
     
+    // Handle engine off with job
     if (engineStatus === 'off' && hasJob) {
       return {
         status: 'offline-with-job',
@@ -184,16 +155,18 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
       }
     }
     
+    // Handle unknown status with job
     if (engineStatus === 'unknown' && hasJob) {
       return {
-        status: 'unknown-with-job',
-        label: 'Status Unknown',
+        status: 'stationary',
+        label: 'Stationary (Job)',
         color: 'gray',
         animation: 'none',
         priority: 4
       }
     }
     
+    // Handle available vehicles (no job)
     if (!hasJob && (engineStatus === 'on' || engineStatus === 'idle')) {
       return {
         status: 'available',
@@ -204,10 +177,21 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
       }
     }
     
-    // Default offline state
+    // Handle slow GPS movement
+    if (speed > 0 && speed <= 5 && (engineStatus === 'unknown' || engineStatus === 'off')) {
+      return {
+        status: 'slow-moving',
+        label: 'Slow Speed',
+        color: 'amber',
+        animation: 'steady',
+        priority: 2
+      }
+    }
+    
+    // Default state - parked/offline
     return {
       status: 'offline',
-      label: 'Offline',
+      label: hasJob ? 'Parked (Job)' : 'Parked',
       color: 'gray',
       animation: 'none',
       priority: 4

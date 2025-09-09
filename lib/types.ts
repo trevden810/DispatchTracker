@@ -14,7 +14,7 @@ export interface FileMakerJobRecord {
   time_complete?: string | null    // Job completion timestamp
   address_C1?: string | null       // Customer service address
   due_date?: string | null         // Job deadline
-  customer_C1?: string | null      // Customer identifier
+  Customer_C1?: string | null      // Customer identifier (Note: Capital C)
 
   // Additional existing fields
   '_kf_client_code_id'?: string | null
@@ -31,7 +31,7 @@ export interface Job {
   truckId?: number
   
   // ✅ ENHANCED PROPERTIES
-  customer?: string | null         // From customer_C1
+  customer?: string | null         // From Customer_C1 (Capital C)
   address?: string | null          // From address_C1
   arrivalTime?: string | null      // From time_arival
   completionTime?: string | null   // From time_complete

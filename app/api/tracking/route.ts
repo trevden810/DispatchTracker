@@ -1,6 +1,8 @@
-// Enhanced Vehicle-Job Tracking API with Real Samsara Data
+// Enhanced Vehicle-Job Tracking API with FileMaker Integration
 import { NextResponse } from 'next/server'
 import { getProximityStatus } from '../../../lib/gps-utils'
+import { Job, VehicleJobCorrelation } from '@/lib/types'
+import { getJobScheduleStatus } from '@/lib/schedule-hygiene'
 
 interface TrackingData {
   vehicleId: string
@@ -10,20 +12,17 @@ interface TrackingData {
     lng: number
     address?: string
   } | null
-  assignedJob: {
-    id: number
-    status: string
-    type: string
-    estimatedLocation?: {
-      lat: number
-      lng: number
-      address: string
-    }
-  } | null
+  assignedJob: Job | null
   proximity: {
     isAtJob: boolean
     distance?: number
     status: 'at-location' | 'nearby' | 'en-route' | 'far'
+  }
+  scheduleStatus: {
+    type: 'normal' | 'incomplete_after_arrival' | 'status_lag' | 'overdue' | 'missing_data'
+    severity: 'info' | 'warning' | 'critical'
+    message: string
+    actionNeeded?: boolean
   }
   lastUpdated: string
   diagnostics?: {
@@ -167,121 +166,83 @@ async function fetchVehiclesWithDiagnostics() {
   }
 }
 
-// Direct FileMaker API call (unchanged)
-async function fetchJobs() {
+// ✅ ENHANCED: Use new FileMaker API with all fields
+async function fetchEnhancedJobs(): Promise<Job[]> {
   try {
-    console.log('📋 Fetching jobs from FileMaker...')
+    console.log('📋 Fetching enhanced jobs with all FileMaker fields...')
     
-    // Auth
-    const authUrl = 'https://modd.mainspringhost.com/fmi/data/vLatest/databases/PEP2_1/sessions'
-    const credentials = Buffer.from(`trevor_api:${process.env.FILEMAKER_PASSWORD}`).toString('base64')
-    
-    const authResponse = await fetch(authUrl, {
-      method: 'POST',
+    // Use our enhanced jobs API route
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002'}/api/jobs?active=true&geocode=true`, {
       headers: {
-        'Authorization': `Basic ${credentials}`,
-        'Content-Type': 'application/json'
-      },
-      signal: AbortSignal.timeout(10000)
-    })
-
-    if (!authResponse.ok) {
-      console.warn('⚠️ FileMaker auth failed')
-      return []
-    }
-
-    const authData = await authResponse.json()
-    const token = authData.response.token
-
-    // Query jobs
-    const findUrl = 'https://modd.mainspringhost.com/fmi/data/vLatest/databases/PEP2_1/layouts/jobs_api/_find'
-    
-    const queryResponse = await fetch(findUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        query: [{ "job_status": "active" }],
-        limit: 100
-      }),
-      signal: AbortSignal.timeout(10000)
-    })
-
-    if (!queryResponse.ok) {
-      console.warn('⚠️ FileMaker query failed')
-      return []
-    }
-
-    const queryData = await queryResponse.json()
-    console.log(`📋 Retrieved ${queryData.response.data?.length || 0} active jobs`)
-    
-    return queryData.response.data?.map((record: any) => {
-      const fieldData = record.fieldData
-      return {
-        id: fieldData._kp_job_id,
-        status: fieldData.job_status,
-        type: fieldData.job_type,
-        truckId: fieldData['*kf*trucks_id']
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
       }
-    }) || []
+    })
+
+    if (!response.ok) {
+      console.warn('⚠️ Enhanced jobs API failed')
+      return []
+    }
+
+    const data = await response.json()
+    console.log(`📋 Retrieved ${data.data?.length || 0} enhanced jobs with customer addresses`)
+    
+    return data.data || []
     
   } catch (error) {
-    console.warn('⚠️ FileMaker fetch failed:', error)
+    console.warn('⚠️ Enhanced jobs fetch failed:', error)
     return []
   }
 }
 
 export async function GET() {
   try {
-    console.log('🎯 Starting enhanced vehicle-job tracking...')
+    console.log('🎯 Starting enhanced vehicle-job tracking with FileMaker integration...')
     
-    // Fetch enhanced vehicles and jobs
+    // Fetch enhanced vehicles and jobs with all new fields
     const [vehicles, jobs] = await Promise.all([
       fetchVehiclesWithDiagnostics(),
-      fetchJobs()
+      fetchEnhancedJobs()
     ])
     
     // Create job lookup by truck ID
-    const jobsByTruck = new Map()
-    jobs.forEach((job: any) => {
+    const jobsByTruck = new Map<string, Job>()
+    jobs.forEach((job: Job) => {
       if (job.truckId) {
         jobsByTruck.set(job.truckId.toString(), job)
       }
     })
     
-    // Mock job locations (replace with actual customer addresses when available)
-    const mockJobLocations = new Map([
-      [1, { lat: 39.7392, lng: -104.9903, address: 'Downtown Denver' }],
-      [2, { lat: 39.7294, lng: -104.8319, address: 'Aurora City Center' }],
-      [3, { lat: 40.0150, lng: -105.2705, address: 'Boulder Main St' }],
-      [4, { lat: 38.8339, lng: -104.8214, address: 'Colorado Springs' }],
-    ])
+    console.log(`🔗 Job assignments: ${jobsByTruck.size} trucks have assigned jobs`)
     
-    // Enhanced vehicle-job correlation with real-time data
+    // Enhanced vehicle-job correlation with real customer addresses
     const trackingData: TrackingData[] = vehicles.map((vehicle: any) => {
       const assignedJob = jobsByTruck.get(vehicle.id)
       let proximity: { isAtJob: boolean; distance?: number; status: 'at-location' | 'nearby' | 'en-route' | 'far' } = { isAtJob: false, status: 'far' }
       
-      if (vehicle.location && assignedJob) {
-        const jobLocation = mockJobLocations.get(assignedJob.id)
+      // ✅ ENHANCED: Use real customer addresses from FileMaker
+      if (vehicle.location && assignedJob && assignedJob.location) {
+        const proximityData = getProximityStatus(
+          vehicle.location,
+          { lat: assignedJob.location.lat, lng: assignedJob.location.lng },
+          parseFloat(process.env.JOB_PROXIMITY_THRESHOLD_MILES || '0.5')
+        )
         
-        if (jobLocation) {
-          const proximityData = getProximityStatus(
-            vehicle.location,
-            jobLocation,
-            parseFloat(process.env.JOB_PROXIMITY_THRESHOLD_MILES || '0.5')
-          )
-          
-          proximity = {
-            isAtJob: proximityData.isAt,
-            distance: proximityData.distance,
-            status: proximityData.status
-          }
-          
-          assignedJob.estimatedLocation = jobLocation
+        proximity = {
+          isAtJob: proximityData.isAt,
+          distance: proximityData.distance,
+          status: proximityData.status
         }
+        
+        console.log(`🎯 ${vehicle.name}: ${proximity.distance?.toFixed(2)}mi from ${assignedJob.customer || 'job'} (${proximity.status})`)
+      }
+      
+      // ✅ ENHANCED: Analyze schedule hygiene with new timestamp fields
+      const scheduleStatus = assignedJob ? getJobScheduleStatus(assignedJob) : {
+        type: 'normal' as const,
+        severity: 'info' as const,
+        message: 'No assigned job',
+        actionNeeded: false
       }
       
       return {
@@ -290,25 +251,32 @@ export async function GET() {
         vehicleLocation: vehicle.location,
         assignedJob: assignedJob || null,
         proximity,
+        scheduleStatus,
         lastUpdated: vehicle.last_updated,
-        diagnostics: vehicle.diagnostics // Include enhanced real-time diagnostics
+        diagnostics: vehicle.diagnostics
       }
     })
     
-    // Enhanced summary with diagnostic info
+    // Enhanced summary with schedule hygiene metrics
     const summary = {
       totalVehicles: vehicles.length,
       vehiclesWithJobs: trackingData.filter(t => t.assignedJob).length,
       vehiclesAtJobs: trackingData.filter(t => t.proximity.isAtJob).length,
       vehiclesWithDiagnostics: trackingData.filter(t => t.diagnostics).length,
+      vehiclesWithAddresses: trackingData.filter(t => t.assignedJob?.location).length,
       engineStates: {
         on: trackingData.filter(t => t.diagnostics?.engineStatus === 'on').length,
         idle: trackingData.filter(t => t.diagnostics?.engineStatus === 'idle').length,
         off: trackingData.filter(t => t.diagnostics?.engineStatus === 'off').length
+      },
+      scheduleIssues: {
+        critical: trackingData.filter(t => t.scheduleStatus.severity === 'critical').length,
+        warning: trackingData.filter(t => t.scheduleStatus.severity === 'warning').length,
+        actionNeeded: trackingData.filter(t => t.scheduleStatus.actionNeeded).length
       }
     }
     
-    console.log(`✅ Enhanced tracking: ${summary.totalVehicles} vehicles, ${summary.engineStates.on} running, ${summary.engineStates.idle} idle`)
+    console.log(`✅ Enhanced tracking: ${summary.totalVehicles} vehicles, ${summary.vehiclesWithAddresses} with real addresses, ${summary.scheduleIssues.critical} critical issues`)
     
     return NextResponse.json({
       success: true,
@@ -317,8 +285,10 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       debug: {
         samsaraEndpoint: '/fleet/vehicles/stats',
-        typesRequested: 'gps,engineStates,fuelPercents,obdOdometerMeters',
-        realTimeDataAvailable: true
+        filemakerFields: 'customer_C1,address_C1,time_arival,time_complete,due_date',
+        realTimeDataAvailable: true,
+        geocodingEnabled: true,
+        scheduleHygieneEnabled: true
       }
     })
     
@@ -332,7 +302,7 @@ export async function GET() {
         details: error instanceof Error ? error.message : String(error),
         debug: {
           timestamp: new Date().toISOString(),
-          endpoint: 'Enhanced /api/tracking'
+          endpoint: 'Enhanced /api/tracking with FileMaker integration'
         }
       },
       { status: 500 }

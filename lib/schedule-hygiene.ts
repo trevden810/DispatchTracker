@@ -181,7 +181,7 @@ export function analyzeFleetScheduleHygiene(jobs: Job[]): {
  * Get schedule status for a specific job
  */
 export function getJobScheduleStatus(job: Job): {
-  type: 'normal' | 'incomplete_after_arrival' | 'status_lag' | 'overdue' | 'missing_data'
+  type: 'normal' | 'incomplete_after_arrival' | 'status_lag' | 'overdue' | 'missing_data' | 'long_idle'
   severity: 'info' | 'warning' | 'critical'
   message: string
   actionNeeded?: boolean

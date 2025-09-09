@@ -1,6 +1,10 @@
 // FileMaker Schema Discovery API
 import { NextResponse } from 'next/server'
 
+// Force dynamic rendering to prevent static generation issues
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 async function getFileMakerAuth() {
   const authUrl = 'https://modd.mainspringhost.com/fmi/data/vLatest/databases/PEP2_1/sessions'
   const credentials = Buffer.from(`trevor_api:${process.env.FILEMAKER_PASSWORD}`).toString('base64')

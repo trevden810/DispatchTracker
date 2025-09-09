@@ -7,7 +7,11 @@ export const metadata = {
   title: 'PepMove DispatchTracker',
   description: 'Professional fleet management and real-time driver tracking for logistics excellence',
   keywords: 'fleet management, GPS tracking, logistics, dispatch, PepMove',
-  viewport: 'width=device-width, initial-scale=1',
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export default function RootLayout({

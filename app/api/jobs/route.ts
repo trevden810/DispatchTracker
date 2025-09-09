@@ -6,6 +6,10 @@ import { Job, FileMakerJobRecord, FileMakerResponse, ApiResponse } from '@/lib/t
 import { geocodeAddress, batchGeocodeAddresses } from '@/lib/geocoding'
 import { analyzeFleetScheduleHygiene } from '@/lib/schedule-hygiene'
 
+// Force dynamic rendering to prevent build-time API calls
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 const FILEMAKER_CONFIG = {
   baseUrl: process.env.FILEMAKER_BASE_URL || 'https://modd.mainspringhost.com',
   database: process.env.FILEMAKER_JOBS_DB || 'PEP2_1',
@@ -199,7 +203,7 @@ export async function GET(request: Request) {
         details: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString(),
         processingTime
-      } satisfies ApiResponse<never>,
+      } as ApiResponse<never>,
       { status: 500 }
     )
   }

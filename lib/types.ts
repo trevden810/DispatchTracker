@@ -61,7 +61,7 @@ export interface VehicleJobCorrelation {
     isAtJobSite: boolean  // Within 0.5 miles
   } | null
   scheduleStatus: {
-    type: 'normal' | 'incomplete_after_arrival' | 'status_lag' | 'overdue' | 'missing_data'
+    type: 'normal' | 'incomplete_after_arrival' | 'status_lag' | 'overdue' | 'missing_data' | 'long_idle'
     severity: 'info' | 'warning' | 'critical'
     message: string
     actionNeeded?: boolean
@@ -116,4 +116,5 @@ export interface ApiResponse<T> {
   count?: number
   totalRecords?: number
   timestamp: string
+  processingTime?: number  // Time taken to process request in milliseconds
 }

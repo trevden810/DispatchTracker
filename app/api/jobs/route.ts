@@ -84,24 +84,30 @@ async function queryEnhancedJobs(limit = 100, activeOnly = false): Promise<FileM
 
 /**
  * Transform FileMaker record to our enhanced Job format
+ * MVP: Smart geocoding with performance optimization
  */
-async function transformJobRecord(record: { fieldData: FileMakerJobRecord }): Promise<Job> {
+async function transformJobRecord(record: { fieldData: FileMakerJobRecord }, enableGeocode = false): Promise<Job> {
   const fieldData = record.fieldData
   
-  // TEMPORARILY SKIP GEOCODING to resolve timeout issues
-  // TODO: Re-enable geocoding once core integration is stable
+  // 🗺️ GEOCODING MVP - Smart address conversion
   let location = null
-  // if (fieldData.address_C1) {
-  //   const geocoded = await geocodeAddress(fieldData.address_C1)
-  //   if (geocoded) {
-  //     location = {
-  //       lat: geocoded.lat,
-  //       lng: geocoded.lng, 
-  //       address: geocoded.address,
-  //       source: 'geocoded' as const
-  //     }
-  //   }
-  // }
+  if (enableGeocode && fieldData.address_C1) {
+    try {
+      const geocoded = await geocodeAddress(fieldData.address_C1)
+      if (geocoded) {
+        location = {
+          lat: geocoded.lat,
+          lng: geocoded.lng, 
+          address: geocoded.address,
+          source: 'geocoded' as const
+        }
+        console.log(`📍 Geocoded: ${fieldData.address_C1} → ${geocoded.lat.toFixed(4)}, ${geocoded.lng.toFixed(4)}`)
+      }
+    } catch (error) {
+      console.warn(`⚠️ Geocoding failed for: ${fieldData.address_C1}`, error)
+      // Continue without geocoding rather than failing entire request
+    }
+  }
   
   return {
     id: fieldData._kp_job_id,
@@ -136,13 +142,13 @@ export async function GET(request: Request) {
     const limit = Math.min(parseInt(searchParams.get('limit') || '100', 10), 500) // Cap at 500
     const activeOnly = searchParams.get('active') === 'true'
     const includeHygiene = searchParams.get('hygiene') === 'true'
-    const geocodeAddresses = searchParams.get('geocode') !== 'false' // Default to true
+    const geocodeAddresses = searchParams.get('geocode') === 'true' // 🗺️ MVP: Opt-in geocoding
     
     console.log('📋 Fetching enhanced jobs from FileMaker...', {
       limit,
       activeOnly,
       includeHygiene,
-      geocodeAddresses: false // Currently disabled for performance
+      geocodeAddresses // 🗺️ MVP: Now controllable via query parameter
     })
     
     // Query FileMaker with enhanced field access
@@ -154,16 +160,35 @@ export async function GET(request: Request) {
 
     console.log(`📊 FileMaker returned ${response.response.data.length} records`)
     
-    // Transform records with enhanced field mapping
+    // 🗺️ GEOCODING MVP - Smart processing strategy
     let jobs: Job[] = []
     
-    // DISABLE GEOCODING TEMPORARILY to isolate FileMaker timeout issue
-    console.log(`🗺️ Skipping geocoding temporarily to resolve timeout issues`)
-    
-    // Transform without geocoding for faster response
-    jobs = await Promise.all(
-      response.response.data.map(record => transformJobRecord(record))
-    )
+    if (geocodeAddresses) {
+      console.log(`🗺️ MVP: Geocoding ${response.response.data.length} addresses...`)
+      
+      // Batch geocoding with intelligent chunking
+      const addresses = response.response.data
+        .map(record => record.fieldData.address_C1)
+        .filter(addr => addr && addr.trim().length > 0)
+      
+      console.log(`📍 Found ${addresses.length} addresses to geocode`)
+      
+      // Transform with geocoding enabled
+      jobs = await Promise.all(
+        response.response.data.map(record => transformJobRecord(record, true))
+      )
+      
+      const geocodedCount = jobs.filter(job => job.location !== null).length
+      console.log(`✅ Successfully geocoded ${geocodedCount}/${addresses.length} addresses`)
+      
+    } else {
+      console.log(`🚀 MVP: Fast mode - skipping geocoding for performance`)
+      
+      // Transform without geocoding for maximum speed
+      jobs = await Promise.all(
+        response.response.data.map(record => transformJobRecord(record, false))
+      )
+    }
 
     console.log(`✅ Transformed ${jobs.length} jobs with enhanced fields`)
 

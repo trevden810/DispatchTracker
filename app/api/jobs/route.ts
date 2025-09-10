@@ -275,10 +275,15 @@ export async function POST(request: Request) {
     console.log('🧪 Testing enhanced FileMaker field access...')
     
     // Query single record to test new fields
-    const response = await queryEnhancedJobs(1, false)
+    const response = await queryEnhancedJobs(3, false) // Get 3 records for better testing
     
     if (response.response?.data?.[0]) {
       const sampleRecord = response.response.data[0].fieldData
+      
+      // 🚛 COMPREHENSIVE ROUTING FIELD TEST
+      console.log('🔍 RAW FILEMAKER RECORD ANALYSIS:')
+      console.log('Raw fieldData keys:', Object.keys(sampleRecord))
+      console.log('Full raw record:', JSON.stringify(sampleRecord, null, 2))
       
       const fieldStatus = {
         original_fields: {
@@ -293,23 +298,84 @@ export async function POST(request: Request) {
           time_complete: sampleRecord.time_complete !== undefined ? '✅ Available' : '❌ Missing',
           address_C1: sampleRecord.address_C1 !== undefined ? '✅ Available' : '❌ Missing',
           due_date: sampleRecord.due_date !== undefined ? '✅ Available' : '❌ Missing',
-          Customer_C1: sampleRecord.Customer_C1 !== undefined ? '✅ Available' : '❌ Missing' // Capital C
+          Customer_C1: sampleRecord.Customer_C1 !== undefined ? '✅ Available' : '❌ Missing'
+        },
+        // 🚛 CRITICAL: Test both possible field name patterns
+        routing_fields_test: {
+          // Pattern 1: _kf_route_id (underscore prefix)
+          '_kf_route_id': sampleRecord._kf_route_id !== undefined ? `✅ Available: ${sampleRecord._kf_route_id}` : '❌ Missing',
+          '_kf_driver_id': sampleRecord._kf_driver_id !== undefined ? `✅ Available: ${sampleRecord._kf_driver_id}` : '❌ Missing',
+          
+          // Pattern 2: *kf*route_id (asterisk prefix - your specification)
+          '*kf*route_id': (sampleRecord as any)['*kf*route_id'] !== undefined ? `✅ Available: ${(sampleRecord as any)['*kf*route_id']}` : '❌ Missing',
+          '*kf*driver_id': (sampleRecord as any)['*kf*driver_id'] !== undefined ? `✅ Available: ${(sampleRecord as any)['*kf*driver_id']}` : '❌ Missing',
+          
+          // Order fields
+          'order_C1': sampleRecord.order_C1 !== undefined ? `✅ Available: ${sampleRecord.order_C1}` : '❌ Missing',
+          'order_C2': sampleRecord.order_C2 !== undefined ? `✅ Available: ${sampleRecord.order_C2}` : '❌ Missing',
+          
+          // Address and customer fields
+          'address_C2': sampleRecord.address_C2 !== undefined ? `✅ Available: ${sampleRecord.address_C2}` : '❌ Missing',
+          'Customer_C2': sampleRecord.Customer_C2 !== undefined ? `✅ Available: ${sampleRecord.Customer_C2}` : '❌ Missing',
+          
+          // Contact and status fields
+          'contact_C1': sampleRecord.contact_C1 !== undefined ? `✅ Available: ${sampleRecord.contact_C1}` : '❌ Missing',
+          'job_status_driver': sampleRecord.job_status_driver !== undefined ? `✅ Available: ${sampleRecord.job_status_driver}` : '❌ Missing'
         },
         sample_data: {
           job_id: sampleRecord._kp_job_id,
           status: sampleRecord.job_status,
-          customer: sampleRecord.Customer_C1 || 'N/A', // Capital C
+          customer: sampleRecord.Customer_C1 || 'N/A',
           address: sampleRecord.address_C1 || 'N/A',
+          truck_id: sampleRecord['*kf*trucks_id'] || 'N/A',
           arrival_time: sampleRecord.time_arival || 'N/A',
           completion_time: sampleRecord.time_complete || 'N/A',
-          due_date: sampleRecord.due_date || 'N/A'
-        }
+          due_date: sampleRecord.due_date || 'N/A',
+          
+          // 🚛 ROUTING DATA TEST
+          route_id_underscore: sampleRecord._kf_route_id || 'N/A',
+          route_id_asterisk: (sampleRecord as any)['*kf*route_id'] || 'N/A',
+          driver_id_underscore: sampleRecord._kf_driver_id || 'N/A', 
+          driver_id_asterisk: (sampleRecord as any)['*kf*driver_id'] || 'N/A',
+          stop_order: sampleRecord.order_C1 || 'N/A',
+          secondary_order: sampleRecord.order_C2 || 'N/A',
+          secondary_address: sampleRecord.address_C2 || 'N/A',
+          secondary_customer: sampleRecord.Customer_C2 || 'N/A',
+          contact_info: sampleRecord.contact_C1 || 'N/A',
+          driver_status: sampleRecord.job_status_driver || 'N/A'
+        },
+        // Test multiple records for patterns
+        multiple_records_test: response.response.data.slice(0, 3).map((record, index) => ({
+          record_index: index + 1,
+          job_id: record.fieldData._kp_job_id,
+          truck_id: record.fieldData['*kf*trucks_id'],
+          route_id_underscore: record.fieldData._kf_route_id,
+          route_id_asterisk: (record.fieldData as any)['*kf*route_id'],
+          stop_order: record.fieldData.order_C1,
+          driver_status: record.fieldData.job_status_driver
+        }))
+      }
+      
+      // 🚛 DETERMINE CORRECT FIELD NAMING PATTERN
+      const hasUnderscoreRoute = sampleRecord._kf_route_id !== undefined
+      const hasAsteriskRoute = (sampleRecord as any)['*kf*route_id'] !== undefined
+      
+      let routingFieldsStatus = '❌ NO ROUTING FIELDS FOUND'
+      if (hasUnderscoreRoute) {
+        routingFieldsStatus = '✅ UNDERSCORE PATTERN (_kf_route_id) FOUND'
+      } else if (hasAsteriskRoute) {
+        routingFieldsStatus = '✅ ASTERISK PATTERN (*kf*route_id) FOUND'
       }
       
       return NextResponse.json({
         success: true,
-        message: 'Enhanced field access test completed',
+        message: 'Comprehensive routing field test completed',
+        routing_fields_status: routingFieldsStatus,
         field_status: fieldStatus,
+        raw_field_keys: Object.keys(sampleRecord),
+        recommendation: hasUnderscoreRoute || hasAsteriskRoute ? 
+          'Route fields detected - update interface mapping if needed' : 
+          'Route fields missing - verify FileMaker layout configuration',
         timestamp: new Date().toISOString()
       })
     } else {

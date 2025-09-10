@@ -92,4 +92,150 @@ export function correlateVehiclesWithRouteAssignments(
           job.status !== 'Done'
         )
         
-        const assignment: RouteAssignment = {\n          vehicleId: vehicle.id,\n          routeId,\n          currentStop: nextJob?.stopOrder || undefined,\n          assignedJobs: sortedJobs,\n          nextJob,\n          progress: {\n            completedStops: completedJobs.length,\n            totalStops: sortedJobs.length,\n            percentComplete: sortedJobs.length > 0 \n              ? Math.round((completedJobs.length / sortedJobs.length) * 100)\n              : 0\n          }\n        }\n        \n        routeAssignments.push(assignment)\n        \n        console.log(`🎯 Vehicle ${vehicle.id}: Route ${routeId}, Stop ${nextJob?.stopOrder || 'N/A'}, Progress ${assignment.progress.percentComplete}%`)\n      } else {\n        console.log(`⚠️ Vehicle ${vehicle.id}: No assigned jobs found`)\n      }\n    }\n  })\n  \n  return routeAssignments\n}\n\n/**\n * Extract numeric vehicle ID from vehicle identifier\n * Examples: \"Truck 77\" -> 77, \"901\" -> 901\n */\nfunction extractVehicleNumber(vehicleId: string): number | null {\n  // Try to extract number from various formats\n  const patterns = [\n    /Truck\\s+(\\d+)/i,    // \"Truck 77\"\n    /Vehicle\\s+(\\d+)/i,  // \"Vehicle 77\"\n    /^(\\d+)$/,           // \"901\"\n    /^\\w+(\\d+)$/         // \"V8\" -> 8, \"OR70\" -> 70\n  ]\n  \n  for (const pattern of patterns) {\n    const match = vehicleId.match(pattern)\n    if (match) {\n      return parseInt(match[1] || match[0], 10)\n    }\n  }\n  \n  return null\n}\n\n/**\n * Calculate proximity status for route-assigned jobs\n */\nexport function calculateRouteProximity(\n  vehicle: Vehicle,\n  assignment: RouteAssignment\n): {\n  currentJobProximity?: {\n    distance: number\n    status: 'at-location' | 'nearby' | 'en-route' | 'far'\n    isAtJobSite: boolean\n  }\n  nextJobDistance?: number\n} {\n  if (!assignment.nextJob?.location) {\n    return {}\n  }\n  \n  const distance = calculateDistance(\n    vehicle.lat,\n    vehicle.lng,\n    assignment.nextJob.location.lat,\n    assignment.nextJob.location.lng\n  )\n  \n  let status: 'at-location' | 'nearby' | 'en-route' | 'far'\n  \n  if (distance <= 0.5) {\n    status = 'at-location'\n  } else if (distance <= 1.0) {\n    status = 'nearby'\n  } else if (distance <= 10.0) {\n    status = 'en-route'\n  } else {\n    status = 'far'\n  }\n  \n  return {\n    currentJobProximity: {\n      distance,\n      status,\n      isAtJobSite: distance <= 0.5\n    },\n    nextJobDistance: distance\n  }\n}\n\n/**\n * Haversine formula for calculating distance between two GPS points\n */\nfunction calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {\n  const R = 3959 // Earth's radius in miles\n  const dLat = toRadians(lat2 - lat1)\n  const dLng = toRadians(lng2 - lng1)\n  \n  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +\n    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *\n    Math.sin(dLng / 2) * Math.sin(dLng / 2)\n  \n  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))\n  \n  return R * c\n}\n\nfunction toRadians(degrees: number): number {\n  return degrees * (Math.PI / 180)\n}\n\n/**\n * Get route summary for dispatchers\n */\nexport function getRouteSummary(assignments: RouteAssignment[]): {\n  totalRoutes: number\n  activeVehicles: number\n  completedStops: number\n  totalStops: number\n  averageProgress: number\n  vehiclesAtLocation: number\n} {\n  const totalRoutes = new Set(assignments.map(a => a.routeId)).size\n  const activeVehicles = assignments.length\n  const completedStops = assignments.reduce((sum, a) => sum + a.progress.completedStops, 0)\n  const totalStops = assignments.reduce((sum, a) => sum + a.progress.totalStops, 0)\n  const averageProgress = totalStops > 0 ? Math.round((completedStops / totalStops) * 100) : 0\n  \n  // Count vehicles currently at job locations (would need proximity calculation)\n  const vehiclesAtLocation = 0 // Placeholder - requires proximity data\n  \n  return {\n    totalRoutes,\n    activeVehicles,\n    completedStops,\n    totalStops,\n    averageProgress,\n    vehiclesAtLocation\n  }\n}\n
+        const assignment: RouteAssignment = {
+          vehicleId: vehicle.id,
+          routeId,
+          currentStop: nextJob?.stopOrder || undefined,
+          assignedJobs: sortedJobs,
+          nextJob,
+          progress: {
+            completedStops: completedJobs.length,
+            totalStops: sortedJobs.length,
+            percentComplete: sortedJobs.length > 0 
+              ? Math.round((completedJobs.length / sortedJobs.length) * 100)
+              : 0
+          }
+        }
+        
+        routeAssignments.push(assignment)
+        
+        console.log(`🎯 Vehicle ${vehicle.id}: Route ${routeId}, Stop ${nextJob?.stopOrder || 'N/A'}, Progress ${assignment.progress.percentComplete}%`)
+      } else {
+        console.log(`⚠️ Vehicle ${vehicle.id}: No assigned jobs found`)
+      }
+    }
+  })
+  
+  return routeAssignments
+}
+
+/**
+ * Extract numeric vehicle ID from vehicle identifier
+ * Examples: "Truck 77" -> 77, "901" -> 901
+ */
+function extractVehicleNumber(vehicleId: string): number | null {
+  // Try to extract number from various formats
+  const patterns = [
+    /Truck\s+(\d+)/i,    // "Truck 77"
+    /Vehicle\s+(\d+)/i,  // "Vehicle 77"
+    /^(\d+)$/,           // "901"
+    /^\w+(\d+)$/         // "V8" -> 8, "OR70" -> 70
+  ]
+  
+  for (const pattern of patterns) {
+    const match = vehicleId.match(pattern)
+    if (match) {
+      return parseInt(match[1] || match[0], 10)
+    }
+  }
+  
+  return null
+}
+
+/**
+ * Calculate proximity status for route-assigned jobs
+ */
+export function calculateRouteProximity(
+  vehicle: Vehicle,
+  assignment: RouteAssignment
+): {
+  currentJobProximity?: {
+    distance: number
+    status: 'at-location' | 'nearby' | 'en-route' | 'far'
+    isAtJobSite: boolean
+  }
+  nextJobDistance?: number
+} {
+  if (!assignment.nextJob?.location) {
+    return {}
+  }
+  
+  const distance = calculateDistance(
+    vehicle.lat,
+    vehicle.lng,
+    assignment.nextJob.location.lat,
+    assignment.nextJob.location.lng
+  )
+  
+  let status: 'at-location' | 'nearby' | 'en-route' | 'far'
+  
+  if (distance <= 0.5) {
+    status = 'at-location'
+  } else if (distance <= 1.0) {
+    status = 'nearby'
+  } else if (distance <= 10.0) {
+    status = 'en-route'
+  } else {
+    status = 'far'
+  }
+  
+  return {
+    currentJobProximity: {
+      distance,
+      status,
+      isAtJobSite: distance <= 0.5
+    },
+    nextJobDistance: distance
+  }
+}
+
+/**
+ * Haversine formula for calculating distance between two GPS points
+ */
+function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 3959 // Earth's radius in miles
+  const dLat = toRadians(lat2 - lat1)
+  const dLng = toRadians(lng2 - lng1)
+  
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2)
+  
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  
+  return R * c
+}
+
+function toRadians(degrees: number): number {
+  return degrees * (Math.PI / 180)
+}
+
+/**
+ * Get route summary for dispatchers
+ */
+export function getRouteSummary(assignments: RouteAssignment[]): {
+  totalRoutes: number
+  activeVehicles: number
+  completedStops: number
+  totalStops: number
+  averageProgress: number
+  vehiclesAtLocation: number
+} {
+  const totalRoutes = new Set(assignments.map(a => a.routeId)).size
+  const activeVehicles = assignments.length
+  const completedStops = assignments.reduce((sum, a) => sum + a.progress.completedStops, 0)
+  const totalStops = assignments.reduce((sum, a) => sum + a.progress.totalStops, 0)
+  const averageProgress = totalStops > 0 ? Math.round((completedStops / totalStops) * 100) : 0
+  
+  // Count vehicles currently at job locations (would need proximity calculation)
+  const vehiclesAtLocation = 0 // Placeholder - requires proximity data
+  
+  return {
+    totalRoutes,
+    activeVehicles,
+    completedStops,
+    totalStops,
+    averageProgress,
+    vehiclesAtLocation
+  }
+}

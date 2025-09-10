@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { 
   Truck, MapPin, Clock, CheckCircle, AlertTriangle, Navigation,
-  Fuel, Gauge, Wrench, User, Calendar, Activity
+  Fuel, Gauge, Wrench, User, Calendar, Activity, Route
 } from 'lucide-react'
 
 interface VehicleData {
@@ -51,6 +51,14 @@ interface VehicleData {
     hasEngineData?: boolean
     hasGpsData?: boolean
   }
+  // 🚛 NEW: Route assignment information
+  routeInfo?: {
+    routeId: number
+    currentStop?: number
+    totalStops: number
+    completedStops: number
+    percentComplete: number
+  } | null
   // Enhanced driver behavior tracking
   driverBehavior?: {
     isDriving: boolean // speed > 5 mph
@@ -361,7 +369,7 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
             </button>
           </div>
 
-          {/* Job Assignment */}
+          {/* Job Assignment with Route Information */}
           <div className="mb-4">
             <h4 className="text-sm font-medium text-gray-700 mb-2">Current Assignment</h4>
             {vehicle.assignedJob ? (
@@ -370,6 +378,36 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
                   ? 'bg-emerald-50 border-emerald-200' 
                   : 'bg-lime-50 border-lime-200'
               }`}>
+                {/* 🚛 Route Information - NEW FEATURE */}
+                {vehicle.routeInfo && (
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-2 mb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Route className="h-4 w-4 text-purple-600" />
+                        <span className="text-sm font-semibold text-purple-800">
+                          Route {vehicle.routeInfo.routeId}
+                        </span>
+                        {vehicle.routeInfo.currentStop && (
+                          <span className="text-xs text-purple-600">
+                            Stop {vehicle.routeInfo.currentStop} of {vehicle.routeInfo.totalStops}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-purple-700 font-medium">
+                        {vehicle.routeInfo.percentComplete}% Complete
+                      </div>
+                    </div>
+                    <div className="mt-1">
+                      <div className="w-full bg-purple-200 rounded-full h-1.5">
+                        <div 
+                          className="bg-purple-600 h-1.5 rounded-full transition-all duration-300" 
+                          style={{ width: `${vehicle.routeInfo.percentComplete}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-semibold text-gray-900 flex items-center">
                     Job #{vehicle.assignedJob.id}
@@ -410,6 +448,17 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
                   <span className="text-blue-700 font-medium text-sm">Available for Dispatch</span>
                 </div>
                 <p className="text-blue-600 text-xs">Ready for new assignment</p>
+                {/* Show route assignment even without active job */}
+                {vehicle.routeInfo && (
+                  <div className="mt-2 pt-2 border-t border-blue-200">
+                    <div className="flex items-center justify-center space-x-2">
+                      <Route className="h-3 w-3 text-blue-600" />
+                      <span className="text-xs text-blue-700">
+                        Route {vehicle.routeInfo.routeId} ready
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

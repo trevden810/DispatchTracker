@@ -123,7 +123,17 @@ async function transformJobRecord(record: { fieldData: FileMakerJobRecord }, ena
     completionTime: fieldData.time_complete || null,
     dueDate: fieldData.due_date || null,
     
-    // Geocoded location data (temporarily null)
+    // 🚛 ROUTING FIELDS (NEWLY ADDED)
+    routeId: fieldData._kf_route_id || null,
+    driverId: fieldData._kf_driver_id || null,
+    stopOrder: fieldData.order_C1 || null,
+    secondaryOrder: fieldData.order_C2 || null,
+    secondaryAddress: fieldData.address_C2 || null,
+    secondaryCustomer: fieldData.Customer_C2 || null,
+    contactInfo: fieldData.contact_C1 || null,
+    driverStatus: fieldData.job_status_driver || null,
+    
+    // Geocoded location data
     location,
     
     // Legacy fields

@@ -1,8 +1,15 @@
-// Enhanced Vehicle-Job Tracking API with FileMaker Integration
+// Enhanced Vehicle-Job Tracking API with Route Correlation
 import { NextResponse } from 'next/server'
 import { getProximityStatus } from '../../../lib/gps-utils'
 import { Job, VehicleJobCorrelation } from '@/lib/types'
 import { getJobScheduleStatus } from '@/lib/schedule-hygiene'
+import { 
+  correlateVehiclesWithRouteAssignments, 
+  calculateRouteProximity, 
+  getRouteSummary,
+  type Vehicle,
+  type RouteAssignment 
+} from '@/lib/route-correlation'
 
 interface TrackingData {
   vehicleId: string
@@ -45,6 +52,14 @@ interface TrackingData {
     hasEngineData?: boolean
     hasGpsData?: boolean
   }
+  // 🚛 NEW: Route assignment information
+  routeInfo?: {
+    routeId: number
+    currentStop?: number
+    totalStops: number
+    completedStops: number
+    percentComplete: number
+  } | null
 }
 
 // Enhanced Samsara API call with real-time diagnostics
@@ -197,47 +212,80 @@ async function fetchEnhancedJobs(): Promise<Job[]> {
 
 export async function GET() {
   try {
-    console.log('🎯 Starting enhanced vehicle-job tracking with FileMaker integration...')
+    console.log('🎯 Starting ROUTE-BASED vehicle-job tracking with FileMaker integration...')
     
     // Fetch enhanced vehicles and jobs with all new fields
-    const [vehicles, jobs] = await Promise.all([
+    const [vehiclesData, jobs] = await Promise.all([
       fetchVehiclesWithDiagnostics(),
       fetchEnhancedJobs()
     ])
     
-    // Create job lookup by truck ID
-    const jobsByTruck = new Map<string, Job>()
-    jobs.forEach((job: Job) => {
-      if (job.truckId) {
-        jobsByTruck.set(job.truckId.toString(), job)
-      }
-    })
+    // Transform to Vehicle interface for route correlation
+    const vehicles: Vehicle[] = vehiclesData.map((v: any) => ({
+      id: v.id,
+      name: v.name,
+      lat: v.location?.lat || 0,
+      lng: v.location?.lng || 0,
+      speed: v.diagnostics?.speed || 0,
+      status: v.status || 'unknown'
+    }))
     
-    console.log(`🔗 Job assignments: ${jobsByTruck.size} trucks have assigned jobs`)
+    console.log(`🚛 Processing ${vehicles.length} vehicles and ${jobs.length} jobs for route correlation...`)
     
-    // Enhanced vehicle-job correlation with real customer addresses
-    const trackingData: TrackingData[] = vehicles.map((vehicle: any) => {
-      const assignedJob = jobsByTruck.get(vehicle.id)
+    // 🎯 USE ROUTE CORRELATION ALGORITHM
+    const routeAssignments = correlateVehiclesWithRouteAssignments(vehicles, jobs)
+    const routeSummary = getRouteSummary(routeAssignments)
+    
+    console.log(`🎯 ROUTE CORRELATION RESULTS:`)
+    console.log(`  - Total routes: ${routeSummary.totalRoutes}`)
+    console.log(`  - Active vehicles: ${routeSummary.activeVehicles}`)
+    console.log(`  - Completed stops: ${routeSummary.completedStops}/${routeSummary.totalStops}`)
+    console.log(`  - Average progress: ${routeSummary.averageProgress}%`)
+    
+    // Create enhanced tracking data using route assignments
+    const trackingData: TrackingData[] = vehiclesData.map((vehicle: any) => {
+      // Find route assignment for this vehicle
+      const routeAssignment = routeAssignments.find(ra => ra.vehicleId === vehicle.id)
+      
+      let assignedJob: Job | null = null
       let proximity: { isAtJob: boolean; distance?: number; status: 'at-location' | 'nearby' | 'en-route' | 'far' } = { isAtJob: false, status: 'far' }
       
-      // ✅ ENHANCED: Use real customer addresses from FileMaker
-      if (vehicle.location && assignedJob && assignedJob.location) {
-        const proximityData = getProximityStatus(
-          vehicle.location,
-          { lat: assignedJob.location.lat, lng: assignedJob.location.lng },
-          parseFloat(process.env.JOB_PROXIMITY_THRESHOLD_MILES || '0.5')
-        )
+      if (routeAssignment) {
+        assignedJob = routeAssignment.nextJob || null
         
-        proximity = {
-          isAtJob: proximityData.isAt,
-          distance: proximityData.distance,
-          status: proximityData.status
+        if (assignedJob) {
+          console.log(`🎯 ${vehicle.name}: Route ${routeAssignment.routeId}, Stop ${routeAssignment.currentStop || 'N/A'}, Next: ${assignedJob.customer} (${routeAssignment.progress.percentComplete}% complete)`)
+          
+          // Calculate proximity to assigned job
+          if (vehicle.location && assignedJob.location) {
+            const routeProximity = calculateRouteProximity(
+              {
+                id: vehicle.id,
+                name: vehicle.name,
+                lat: vehicle.location.lat,
+                lng: vehicle.location.lng,
+                speed: vehicle.diagnostics?.speed || 0,
+                status: vehicle.status
+              },
+              routeAssignment
+            )
+            
+            if (routeProximity.currentJobProximity) {
+              proximity = {
+                isAtJob: routeProximity.currentJobProximity.isAtJobSite,
+                distance: routeProximity.currentJobProximity.distance,
+                status: routeProximity.currentJobProximity.status
+              }
+              
+              console.log(`📍 ${vehicle.name}: ${proximity.distance?.toFixed(2)}mi from ${assignedJob.customer} (${proximity.status})`)
+            }
+          }
         }
-        
-        console.log(`🎯 ${vehicle.name}: ${proximity.distance?.toFixed(2)}mi from ${assignedJob.customer || 'job'} (${proximity.status})`)
+      } else {
+        console.log(`⚠️ ${vehicle.name}: No route assignment found`)
       }
       
-      // ✅ ENHANCED: Analyze schedule hygiene with new timestamp fields
+      // Enhanced schedule hygiene analysis
       const scheduleStatus = assignedJob ? getJobScheduleStatus(assignedJob) : {
         type: 'normal' as const,
         severity: 'info' as const,
@@ -249,21 +297,40 @@ export async function GET() {
         vehicleId: vehicle.id,
         vehicleName: vehicle.name,
         vehicleLocation: vehicle.location,
-        assignedJob: assignedJob || null,
+        assignedJob,
         proximity,
         scheduleStatus,
         lastUpdated: vehicle.last_updated,
-        diagnostics: vehicle.diagnostics
+        diagnostics: vehicle.diagnostics,
+        // Add route information
+        routeInfo: routeAssignment ? {
+          routeId: routeAssignment.routeId,
+          currentStop: routeAssignment.currentStop,
+          totalStops: routeAssignment.progress.totalStops,
+          completedStops: routeAssignment.progress.completedStops,
+          percentComplete: routeAssignment.progress.percentComplete
+        } : null
       }
     })
     
-    // Enhanced summary with schedule hygiene metrics
+    // 🎯 ENHANCED SUMMARY with route correlation metrics
     const summary = {
-      totalVehicles: vehicles.length,
+      totalVehicles: vehiclesData.length,
       vehiclesWithJobs: trackingData.filter(t => t.assignedJob).length,
       vehiclesAtJobs: trackingData.filter(t => t.proximity.isAtJob).length,
       vehiclesWithDiagnostics: trackingData.filter(t => t.diagnostics).length,
       vehiclesWithAddresses: trackingData.filter(t => t.assignedJob?.location).length,
+      
+      // 🚛 NEW: Route correlation metrics
+      routeMetrics: {
+        totalRoutes: routeSummary.totalRoutes,
+        activeVehicles: routeSummary.activeVehicles,
+        vehiclesWithRoutes: trackingData.filter(t => t.routeInfo).length,
+        completedStops: routeSummary.completedStops,
+        totalStops: routeSummary.totalStops,
+        averageProgress: routeSummary.averageProgress
+      },
+      
       engineStates: {
         on: trackingData.filter(t => t.diagnostics?.engineStatus === 'on').length,
         idle: trackingData.filter(t => t.diagnostics?.engineStatus === 'idle').length,
@@ -276,7 +343,8 @@ export async function GET() {
       }
     }
     
-    console.log(`✅ Enhanced tracking: ${summary.totalVehicles} vehicles, ${summary.vehiclesWithAddresses} with real addresses, ${summary.scheduleIssues.critical} critical issues`)
+    console.log(`✅ ROUTE CORRELATION ACTIVATED: ${summary.totalVehicles} vehicles, ${summary.routeMetrics.vehiclesWithRoutes} with route assignments, ${summary.routeMetrics.totalRoutes} active routes`)
+    console.log(`📊 Route Progress: ${summary.routeMetrics.completedStops}/${summary.routeMetrics.totalStops} stops completed (${summary.routeMetrics.averageProgress}% avg progress)`)
     
     return NextResponse.json({
       success: true,
@@ -285,10 +353,12 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       debug: {
         samsaraEndpoint: '/fleet/vehicles/stats',
-        filemakerFields: 'customer_C1,address_C1,time_arival,time_complete,due_date',
+        filemakerFields: 'routeId,stopOrder,driverId,customer_C1,address_C1,time_arival,time_complete,due_date',
+        routeCorrelationEnabled: true,
         realTimeDataAvailable: true,
         geocodingEnabled: true,
-        scheduleHygieneEnabled: true
+        scheduleHygieneEnabled: true,
+        correlationAlgorithm: 'route-based-assignments'
       }
     })
     

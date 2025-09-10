@@ -16,6 +16,16 @@ export interface FileMakerJobRecord {
   due_date?: string | null         // Job deadline
   Customer_C1?: string | null      // Customer identifier (Note: Capital C)
 
+  // 🚛 CRITICAL ROUTING FIELDS (NEWLY REQUESTED)
+  _kf_route_id?: number | null     // Route assignment ID
+  _kf_driver_id?: number | null    // Driver assignment ID  
+  order_C1?: number | null         // Stop sequence number (C1 in your screenshot)
+  order_C2?: number | null         // Secondary order field
+  address_C2?: string | null       // Secondary/return address
+  Customer_C2?: string | null      // Secondary customer
+  contact_C1?: string | null       // Primary contact info
+  job_status_driver?: string | null // Driver-specific status
+
   // Additional existing fields
   '_kf_client_code_id'?: string | null
   notes_call_ahead?: string | null
@@ -36,6 +46,16 @@ export interface Job {
   arrivalTime?: string | null      // From time_arival
   completionTime?: string | null   // From time_complete
   dueDate?: string | null          // From due_date
+  
+  // 🚛 ROUTING PROPERTIES (NEWLY ADDED)
+  routeId?: number | null          // From _kf_route_id
+  driverId?: number | null         // From _kf_driver_id
+  stopOrder?: number | null        // From order_C1 (sequence in route)
+  secondaryOrder?: number | null   // From order_C2
+  secondaryAddress?: string | null // From address_C2 (return location)
+  secondaryCustomer?: string | null // From Customer_C2
+  contactInfo?: string | null      // From contact_C1
+  driverStatus?: string | null     // From job_status_driver
   
   // Location data (geocoded from address)
   location: {

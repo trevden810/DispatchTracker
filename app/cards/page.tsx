@@ -42,6 +42,14 @@ interface TrackingData {
     driverName?: string
     driverId?: string
   }
+  // 🚛 NEW: Route assignment information
+  routeInfo?: {
+    routeId: number
+    currentStop?: number
+    totalStops: number
+    completedStops: number
+    percentComplete: number
+  } | null
 }
 
 export default function VehicleCards() {
@@ -151,6 +159,8 @@ export default function VehicleCards() {
     withJobs: trackingData.filter(t => t.assignedJob).length,
     atJobs: trackingData.filter(t => t.proximity.isAtJob).length,
     withDiagnostics: trackingData.filter(t => t.diagnostics).length,
+    // 🚛 NEW: Route metrics
+    withRoutes: trackingData.filter(t => t.routeInfo).length,
     // Filtered results
     filtered: filteredTrackingData.length
   }
@@ -193,7 +203,7 @@ export default function VehicleCards() {
 
       <div className="container-responsive py-8 space-y-8">
         {/* Summary Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-fade-in">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 animate-fade-in">
           <div className="glass-card p-4 text-center">
             <div className="text-2xl font-bold text-gray-900">{summary.total}</div>
             <div className="text-sm text-gray-600">Total Vehicles</div>
@@ -205,6 +215,10 @@ export default function VehicleCards() {
           <div className="glass-card p-4 text-center">
             <div className="text-2xl font-bold text-emerald-600">{summary.atJobs}</div>
             <div className="text-sm text-gray-600">On Location</div>
+          </div>
+          <div className="glass-card p-4 text-center">
+            <div className="text-2xl font-bold text-purple-600">{summary.withRoutes}</div>
+            <div className="text-sm text-gray-600">Route Assigned</div>
           </div>
           <div className="glass-card p-4 text-center">
             <div className="text-2xl font-bold text-blue-600">{summary.withDiagnostics}</div>

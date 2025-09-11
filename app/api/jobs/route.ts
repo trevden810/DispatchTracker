@@ -124,8 +124,8 @@ async function transformJobRecord(record: { fieldData: FileMakerJobRecord }, ena
     dueDate: fieldData.due_date || null,
     
     // 🚛 ROUTING FIELDS (CORRECTLY MAPPED WITH ASTERISKS)
-    routeId: fieldData['*kf*route_id'] || null,        // FIXED: Use asterisks not underscores
-    driverId: fieldData['*kf*driver_id'] || null,      // FIXED: Use asterisks not underscores
+    routeId: fieldData['*kf*route_id'] || fieldData['_kf_route_id'] || null,        // Support both field patterns
+    driverId: fieldData['*kf*driver_id'] || fieldData['_kf_driver_id'] || null,      // Support both field patterns
     stopOrder: fieldData.order_C1 || null,
     secondaryOrder: fieldData.order_C2 || null,
     secondaryAddress: fieldData.address_C2 || null,

@@ -1,233 +1,223 @@
-# DispatchTracker - Enhanced Fleet Management System
+# DispatchTracker - MVP Debug & Rebuild
 
-**Real-time GPS tracking correlated with FileMaker job assignments for logistics specialists**
+**Status**: CRITICAL ISSUES DETECTED - Methodical rebuild required starting with single vehicle test
 
-## 🎉 Project Status: ROUTE FIELDS ADDED - READY FOR ENHANCED CORRELATION
+## 🚨 CURRENT PROBLEMS IDENTIFIED
 
-**Major Achievement**: Database administrator has added all requested routing fields to FileMaker jobs_api layout. The enhanced vehicle-to-job correlation system is now ready for implementation and testing.
+### **Issue 1: No Job Information on Vehicle Cards**
+- Vehicle cards are not displaying assigned job information
+- Route assignments are not appearing in the dashboard
+- "Assigned/Unassigned" filter shows no assignments
 
-**Immediate Priority**: Test and implement the route-based correlation algorithm to enable accurate vehicle-job assignments.
+### **Issue 2: GPS Data Not Showing**
+- Vehicle location data missing from cards
+- Real-time GPS tracking not displaying
+- Samsara API integration issues suspected
 
----
-
-## ✅ Recently Completed Features
-
-### Enhanced FileMaker Integration (WORKING)
-- **All original 5 enhanced fields**: time_arival, time_complete, address_C1, due_date, Customer_C1
-- **NEW: 8 routing fields added**: _kf_route_id, _kf_driver_id, order_C1, order_C2, address_C2, Customer_C2, contact_C1, job_status_driver
-- **Real customer data**: 538,558+ job records with actual PepMove customer information
-- **Geocoding MVP**: Opt-in address-to-GPS conversion with 50%+ success rate
-
-### Production Deployment (STABLE)
-- **Build issues resolved**: All TypeScript compilation errors fixed
-- **Live system**: https://www.pepmovetracker.info working with real data
-- **51 vehicles tracked**: Samsara Fleet API integration operational
-- **API performance**: Stable response times with production optimizations
+### **Issue 3: Route Correlation Not Working**
+- Despite field mapping fixes, route assignments not functioning
+- Vehicle-to-job correlation failing
+- Dashboard shows "0 trucks have assigned jobs"
 
 ---
 
-## 🚛 IMMEDIATE OPPORTUNITY: Route Correlation Implementation
+## 🎯 METHODICAL MVP APPROACH
 
-### **Current Issue**
-- ✅ All FileMaker routing fields now accessible
-- ✅ Enhanced correlation algorithm implemented
-- ❌ **Need to test and activate route-based vehicle assignments**
-
-### **Expected Transformation**
-**Before**: "0 trucks have assigned jobs"  
-**After**: "Truck 77 - Route 2, Stop 3 of 7"
-
-### **Available Route Data** 
-```typescript
-// NOW ACCESSIBLE from FileMaker:
-routeId: 2,              // _kf_route_id (Route assignment)
-stopOrder: 3,            // order_C1 (C1 column sequence)  
-driverId: 456,           // _kf_driver_id (Driver assignment)
-driverStatus: "En Route" // job_status_driver (Current status)
-```
+### **Test Subject: Mykiel James in Truck 77**
+- **Driver**: Mykiel James  
+- **Vehicle**: Truck 77
+- **Goal**: Single working vehicle with complete GPS and job data
+- **Success Criteria**: "Truck 77 - Mykiel James - Route X, Stop Y of Z"
 
 ---
 
-## 🎯 Next Developer Instructions
+## 🔧 SYSTEMATIC DEBUG STRATEGY
 
-### **Use MCP Tools Strategically:**
+### **Phase 1: Data Source Verification (1 hour)**
 
-#### **1. Filesystem Tools (Primary)**
+#### **1.1 Samsara GPS Integration**
 ```bash
-# Read current route correlation implementation
-Filesystem:read_file("C:\Projects\DispatchTracker\lib\route-correlation.ts")
+# Test Samsara API directly for Truck 77
+curl -H "Authorization: Bearer samsara_api_VXKWxiewMU9DvBoEH1ttkHmHHOT1q8" \
+"https://api.samsara.com/fleet/vehicles/stats?types=gps,engineStates"
 
-# Test current API response with new fields
-Filesystem:read_file("C:\Projects\DispatchTracker\app\api\jobs\route.ts")
-
-# Review vehicle tracking integration
-Filesystem:read_file("C:\Projects\DispatchTracker\app\api\tracking\route.ts")
+# Look specifically for Truck 77 data
+# Verify: GPS coordinates, engine status, timestamp
 ```
 
-#### **2. Analysis Tool**
+#### **1.2 FileMaker Job Data**
+```bash
+# Test enhanced jobs API for Truck 77 assignments  
+curl "https://www.pepmovetracker.info/api/jobs?limit=20" | \
+jq '.data[] | select(.truckId == 77) | {id, customer, routeId, stopOrder, truckId}'
+
+# Expected: Jobs assigned to truckId: 77 with route information
+```
+
+#### **1.3 Route Correlation Test**
+```bash
+# Test tracking API for Truck 77 correlation
+curl "https://www.pepmovetracker.info/api/tracking" | \
+jq '.data[] | select(.vehicleName | contains("77")) | {vehicleName, assignedJob, routeInfo}'
+
+# Expected: Truck 77 with assigned job and route information
+```
+
+### **Phase 2: Component-by-Component Fix (2 hours)**
+
+#### **2.1 GPS Data Flow**
+- Verify Samsara API token validity
+- Test vehicle ID matching between Samsara and FileMaker
+- Fix GPS coordinate display in vehicle cards
+- Ensure real-time location updates
+
+#### **2.2 Job Assignment Logic**
+- Debug transformJobRecord() function field mapping
+- Test route correlation algorithm with Truck 77 data
+- Verify vehicle-to-job matching logic
+- Fix assigned job display in vehicle cards
+
+#### **2.3 Route Information Display**
+- Test route progress calculation for Truck 77
+- Debug vehicle card route information display
+- Verify "Route X, Stop Y of Z" formatting
+- Fix dashboard assignment counts
+
+### **Phase 3: End-to-End Integration (1 hour)**
+
+#### **3.1 Complete Truck 77 Test**
+- GPS location showing on vehicle card ✓
+- Assigned job information displaying ✓  
+- Route progress visible (Route X, Stop Y of Z) ✓
+- Driver name (Mykiel James) showing ✓
+- Real-time status updates working ✓
+
+#### **3.2 Expand to Additional Vehicles**
+- Apply working solution to other trucks
+- Verify scalability with full 51-vehicle fleet
+- Test performance with complete data set
+
+---
+
+## 🛠️ SPECIFIC DEBUG COMMANDS
+
+### **For Next Developer Session:**
+
+#### **1. Check Samsara API Health**
 ```javascript
-// Test the new routing fields in production
-const response = await fetch("https://www.pepmovetracker.info/api/jobs?limit=5")
-const jobs = await response.json()
+// Use Analysis tool to test Samsara integration
+const response = await fetch("https://api.samsara.com/fleet/vehicles/stats?types=gps,engineStates", {
+  headers: {
+    'Authorization': 'Bearer samsara_api_VXKWxiewMU9DvBoEH1ttkHmHHOT1q8'
+  }
+});
 
-// Verify routing fields are populated
-jobs.data.forEach(job => {
-  console.log(`Job ${job.id}: Route ${job.routeId}, Stop ${job.stopOrder}`)
-})
+const vehicles = await response.json();
+const truck77 = vehicles.data.find(v => v.name.includes('77'));
+console.log('Truck 77 GPS data:', truck77);
 ```
 
-#### **3. Web Research & Development**
-- Research best practices for route optimization algorithms
-- Find examples of vehicle-job correlation in logistics systems
-- Investigate advanced proximity detection methods
+#### **2. Verify FileMaker Job Assignments**
+```javascript
+// Test jobs API for Truck 77 assignments
+const jobs = await fetch("https://www.pepmovetracker.info/api/jobs?limit=50");
+const jobsData = await jobs.json();
 
-### **Priority Tasks (In Order)**
-
-#### **Phase 1: Route Field Verification (30 minutes)**
-1. **Test new FileMaker fields**:
-   ```bash
-   curl "https://www.pepmovetracker.info/api/jobs?limit=3"
-   ```
-   Expected: routeId, stopOrder, driverId fields populated
-
-2. **Verify data quality**:
-   - Check if route assignments match screenshot (Route 2, etc.)
-   - Validate stop sequences (C1 order: 1,2,3,4,5,6,7)
-   - Confirm truck-to-route correlations
-
-#### **Phase 2: Enhanced Correlation Implementation (2 hours)**
-1. **Update tracking API** to use route-based logic instead of proximity-only
-2. **Implement stop sequence tracking** for route progress
-3. **Test vehicle assignment accuracy** with real route data
-4. **Deploy enhanced correlation** to production
-
-#### **Phase 3: Advanced Features (Same day)**
-1. **Route progress dashboard**: "Truck 77 - Route 2, Stop 3 of 7"
-2. **Proximity alerts for assigned jobs only**: No false alerts
-3. **Driver performance tracking**: Real completion times per stop
-4. **Customer service enhancements**: Accurate ETA predictions
-
----
-
-## 🔧 Technical Implementation Guide
-
-### **Key Files to Modify**
-```
-lib/route-correlation.ts    # ✅ Already implemented - ready to activate
-app/api/tracking/route.ts   # Update to use route-based correlation
-lib/types.ts               # ✅ Updated with routing fields
+const truck77Jobs = jobsData.data.filter(job => job.truckId === 77);
+console.log('Truck 77 jobs:', truck77Jobs);
+console.log('Route assignments:', truck77Jobs.map(j => ({id: j.id, routeId: j.routeId, stopOrder: j.stopOrder})));
 ```
 
-### **Expected API Response (After Implementation)**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "vehicleId": "Truck 77",
-      "routeId": 2,
-      "currentStop": 3,
-      "totalStops": 7,
-      "progress": "43%",
-      "assignedJobs": [
-        {
-          "id": 64479,
-          "customer": "50222 SEATTLE - QUEEN ANN",
-          "stopOrder": 3,
-          "status": "En Route",
-          "location": {"lat": 47.6205, "lng": -122.3493}
-        }
-      ]
-    }
-  ]
-}
-```
+#### **3. Debug Vehicle Card Data**
+```javascript
+// Test tracking API for complete vehicle data
+const tracking = await fetch("https://www.pepmovetracker.info/api/tracking");
+const trackingData = await tracking.json();
 
-### **Verification Commands**
-```bash
-# Test enhanced correlation
-curl "https://www.pepmovetracker.info/api/tracking"
-
-# Verify route assignments  
-curl "https://www.pepmovetracker.info/api/jobs?limit=10" | jq '.data[] | {id, routeId, stopOrder, customer}'
+const truck77Vehicle = trackingData.data.find(v => v.vehicleName.includes('77'));
+console.log('Truck 77 complete data:', truck77Vehicle);
 ```
 
 ---
 
-## 📊 Business Impact Opportunity
+## 📋 MVP SUCCESS CHECKLIST
 
-### **Current State**
-- 51 vehicles tracked but showing "0 assigned jobs"
-- Dispatchers cannot see vehicle-to-customer correlations
-- Manual coordination required for job assignments
-- Customer service gaps due to lack of accurate tracking
+### **Truck 77 - Mykiel James Verification:**
 
-### **Potential After Implementation**
-- **100% vehicle-job correlation accuracy**
-- **Real-time route progress**: "Stop 3 of 7 complete"
-- **Automated dispatcher alerts**: Driver arrivals, delays, completions
-- **Enhanced customer service**: "Your driver is 2 stops away"
-- **Operational efficiency**: 50%+ reduction in coordination overhead
+#### **GPS & Location** 
+- [ ] Vehicle shows current GPS coordinates
+- [ ] Location updates in real-time (every 30 seconds)
+- [ ] Address reverse geocoding working
+- [ ] Map integration functional
 
----
+#### **Job Assignment**
+- [ ] Vehicle shows assigned job information
+- [ ] Customer name and address displaying
+- [ ] Job status and type visible
+- [ ] Proximity to job location calculated
 
-## 🔍 Current System Status
+#### **Route Information**
+- [ ] Route ID displaying (Route 1, Route 2, etc.)
+- [ ] Stop sequence showing (Stop 3 of 7)
+- [ ] Route progress percentage visible
+- [ ] Driver name (Mykiel James) showing
 
-### **Working Components**
-- ✅ **Samsara Fleet API**: 51 vehicles with real-time GPS
-- ✅ **Enhanced FileMaker API**: All 13 fields accessible (5 original + 8 routing)
-- ✅ **Geocoding MVP**: Address-to-GPS conversion operational
-- ✅ **Production deployment**: Stable at www.pepmovetracker.info
-- ✅ **Real customer data**: 538,558+ job records flowing
-
-### **Ready for Activation**
-- ✅ **Route correlation algorithm**: Implemented in lib/route-correlation.ts
-- ✅ **Enhanced job types**: All routing properties defined
-- ✅ **API infrastructure**: Ready to return route assignments
-- ⏳ **Testing needed**: Verify new fields and activate correlation
+#### **Dashboard Integration**
+- [ ] "Assigned" vehicles count > 0
+- [ ] Vehicle appears in "Assigned Only" filter
+- [ ] Route metrics displaying in summary
+- [ ] Real-time updates working
 
 ---
 
-## 🛠️ Development Environment
+## 🔧 CRITICAL FILES TO INVESTIGATE
 
-### **Local Setup**
-```bash
-cd C:\Projects\DispatchTracker
-npm install
-cp .env.production .env.local
-npm run dev
+### **API Endpoints**
+```
+app/api/tracking/route.ts     # Main correlation logic
+app/api/jobs/route.ts         # FileMaker job data
+lib/route-correlation.ts      # Route assignment algorithm
 ```
 
-### **Production Testing**
-```bash
-# Enhanced jobs with routing data
-https://www.pepmovetracker.info/api/jobs?limit=5
+### **Frontend Components**  
+```
+components/VehicleCard.tsx    # Individual vehicle display
+app/cards/page.tsx           # Main dashboard
+lib/types.ts                 # Data interfaces
+```
 
-# Vehicle tracking (will show enhanced correlation after implementation)
-https://www.pepmovetracker.info/api/tracking
-
-# Dashboard (will display route assignments after correlation update)
-https://www.pepmovetracker.info
+### **Utilities**
+```
+lib/gps-utils.ts             # GPS calculations
+lib/geocoding.ts             # Address conversion
 ```
 
 ---
 
-## 📋 Success Metrics
+## 🎯 EXPECTED MVP OUTCOME
 
-### **Technical Validation**
-- [ ] New routing fields populated in API responses
-- [ ] Vehicle-job correlation shows >0 assignments
-- [ ] Route progress calculation working
-- [ ] Stop sequence tracking functional
+**Single Vehicle Success Model:**
+```
+Truck 77 - Mykiel James
+├── GPS: 39.7392° N, 104.9903° W (Aurora, CO)
+├── Status: Driving (25 mph)  
+├── Job: #64479 - COMPASS GROUP
+├── Route: Route 2, Stop 3 of 7 (43% complete)
+├── Destination: 11095 E 45TH AVE, DENVER
+├── Distance: 2.3 miles away
+└── ETA: 8 minutes
+```
 
-### **Business Validation**
-- [ ] "Truck 77 - Route 2, Stop 3 of 7" displayed
-- [ ] Vehicle proximity alerts only for assigned jobs
-- [ ] Dispatcher dashboard shows real assignments
-- [ ] Customer service improvements measurable
+**Once Truck 77 works perfectly, replicate the solution across all 51 vehicles for complete fleet management.**
 
 ---
 
-**The foundation is complete and all required FileMaker fields are now accessible. The enhanced route correlation system is implemented and ready for activation. Use the MCP tools to verify the new field data and implement the route-based vehicle-job assignments for immediate business impact.**
+## 📞 IMMEDIATE ACTION REQUIRED
 
-**This represents the final step to transform DispatchTracker from basic vehicle tracking to comprehensive route management with real-time job correlation and dispatcher workflow optimization.**
+1. **Start new Claude conversation** with this README context
+2. **Focus exclusively on Truck 77** until fully functional  
+3. **Use MCP tools systematically** to debug each component
+4. **Document working solution** for replication across fleet
+5. **Avoid complexity** - fix basics first before advanced features
+
+**The foundation exists, but requires methodical debugging starting with a single vehicle to identify and resolve the core issues preventing job and GPS data from displaying properly.**

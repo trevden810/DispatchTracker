@@ -302,13 +302,13 @@ export async function POST(request: Request) {
         },
         // 🚛 CRITICAL: Test both possible field name patterns
         routing_fields_test: {
-          // Pattern 1: _kf_route_id (underscore prefix)
-          '_kf_route_id': sampleRecord._kf_route_id !== undefined ? `✅ Available: ${sampleRecord._kf_route_id}` : '❌ Missing',
-          '_kf_driver_id': sampleRecord._kf_driver_id !== undefined ? `✅ Available: ${sampleRecord._kf_driver_id}` : '❌ Missing',
+          // Pattern 1: _kf_route_id (underscore prefix) - OLD PATTERN
+          '_kf_route_id': (sampleRecord as any)._kf_route_id !== undefined ? `✅ Available: ${(sampleRecord as any)._kf_route_id}` : '❌ Missing',
+          '_kf_driver_id': (sampleRecord as any)._kf_driver_id !== undefined ? `✅ Available: ${(sampleRecord as any)._kf_driver_id}` : '❌ Missing',
           
-          // Pattern 2: *kf*route_id (asterisk prefix - your specification)
-          '*kf*route_id': (sampleRecord as any)['*kf*route_id'] !== undefined ? `✅ Available: ${(sampleRecord as any)['*kf*route_id']}` : '❌ Missing',
-          '*kf*driver_id': (sampleRecord as any)['*kf*driver_id'] !== undefined ? `✅ Available: ${(sampleRecord as any)['*kf*driver_id']}` : '❌ Missing',
+          // Pattern 2: *kf*route_id (asterisk prefix - CORRECT PATTERN)
+          '*kf*route_id': sampleRecord['*kf*route_id'] !== undefined ? `✅ Available: ${sampleRecord['*kf*route_id']}` : '❌ Missing',
+          '*kf*driver_id': sampleRecord['*kf*driver_id'] !== undefined ? `✅ Available: ${sampleRecord['*kf*driver_id']}` : '❌ Missing',
           
           // Order fields
           'order_C1': sampleRecord.order_C1 !== undefined ? `✅ Available: ${sampleRecord.order_C1}` : '❌ Missing',
@@ -333,10 +333,10 @@ export async function POST(request: Request) {
           due_date: sampleRecord.due_date || 'N/A',
           
           // 🚛 ROUTING DATA TEST
-          route_id_underscore: sampleRecord._kf_route_id || 'N/A',
-          route_id_asterisk: (sampleRecord as any)['*kf*route_id'] || 'N/A',
-          driver_id_underscore: sampleRecord._kf_driver_id || 'N/A', 
-          driver_id_asterisk: (sampleRecord as any)['*kf*driver_id'] || 'N/A',
+          route_id_underscore: (sampleRecord as any)._kf_route_id || 'N/A',
+          route_id_asterisk: sampleRecord['*kf*route_id'] || 'N/A',
+          driver_id_underscore: (sampleRecord as any)._kf_driver_id || 'N/A', 
+          driver_id_asterisk: sampleRecord['*kf*driver_id'] || 'N/A',
           stop_order: sampleRecord.order_C1 || 'N/A',
           secondary_order: sampleRecord.order_C2 || 'N/A',
           secondary_address: sampleRecord.address_C2 || 'N/A',
@@ -349,16 +349,16 @@ export async function POST(request: Request) {
           record_index: index + 1,
           job_id: record.fieldData._kp_job_id,
           truck_id: record.fieldData['*kf*trucks_id'],
-          route_id_underscore: record.fieldData._kf_route_id,
-          route_id_asterisk: (record.fieldData as any)['*kf*route_id'],
+          route_id_underscore: (record.fieldData as any)._kf_route_id,
+          route_id_asterisk: record.fieldData['*kf*route_id'],
           stop_order: record.fieldData.order_C1,
           driver_status: record.fieldData.job_status_driver
         }))
       }
       
       // 🚛 DETERMINE CORRECT FIELD NAMING PATTERN
-      const hasUnderscoreRoute = sampleRecord._kf_route_id !== undefined
-      const hasAsteriskRoute = (sampleRecord as any)['*kf*route_id'] !== undefined
+      const hasUnderscoreRoute = (sampleRecord as any)._kf_route_id !== undefined
+      const hasAsteriskRoute = sampleRecord['*kf*route_id'] !== undefined
       
       let routingFieldsStatus = '❌ NO ROUTING FIELDS FOUND'
       if (hasUnderscoreRoute) {

@@ -123,7 +123,7 @@ async function transformJobRecord(record: { fieldData: FileMakerJobRecord }, ena
     completionTime: fieldData.time_complete || null,
     dueDate: fieldData.due_date || null,
     
-    // 🚛 ROUTING FIELDS (CORRECTLY MAPPED WITH ASTERISKS)
+    // 🚛 ROUTING FIELDS (SUPPORT BOTH FIELD PATTERNS)
     routeId: fieldData['*kf*route_id'] || fieldData['_kf_route_id'] || null,        // Support both field patterns
     driverId: fieldData['*kf*driver_id'] || fieldData['_kf_driver_id'] || null,      // Support both field patterns
     stopOrder: fieldData.order_C1 || null,

@@ -16,9 +16,11 @@ export interface FileMakerJobRecord {
   due_date?: string | null         // Job deadline
   Customer_C1?: string | null      // Customer identifier (Note: Capital C)
 
-  // 🚛 CRITICAL ROUTING FIELDS (CORRECTLY MAPPED)
-  '*kf*route_id'?: number | null     // Route assignment ID (FIXED: asterisks not underscores)
-  '*kf*driver_id'?: number | null    // Driver assignment ID (FIXED: asterisks not underscores)
+  // 🚛 CRITICAL ROUTING FIELDS (SUPPORT BOTH PATTERNS)
+  '*kf*route_id'?: number | null     // Route assignment ID (asterisk pattern)
+  '_kf_route_id'?: number | null     // Route assignment ID (underscore pattern)
+  '*kf*driver_id'?: number | null    // Driver assignment ID (asterisk pattern) 
+  '_kf_driver_id'?: number | null    // Driver assignment ID (underscore pattern)
   order_C1?: number | null         // Stop sequence number (C1 in your screenshot)
   order_C2?: number | null         // Secondary order field
   address_C2?: string | null       // Secondary/return address

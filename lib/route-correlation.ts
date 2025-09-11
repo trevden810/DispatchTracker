@@ -66,9 +66,9 @@ export function correlateVehiclesWithRouteAssignments(
   
   // Debug: Show truck assignment groups
   console.log('\n🚛 TRUCK ASSIGNMENTS:')
-  for (const [truckId, truckJobs] of jobsByTruck) {
+  jobsByTruck.forEach((truckJobs, truckId) => {
     console.log(`  Truck ${truckId}: ${truckJobs.length} jobs`)
-  }
+  })
   
   const routeAssignments: RouteAssignment[] = []
   
@@ -150,21 +150,31 @@ export function correlateVehiclesWithRouteAssignments(
 
 /**
  * Extract numeric vehicle ID from vehicle identifier
- * Examples: "Truck 77" -> 77, "901" -> 901
+ * Examples: "Truck 77" -> 77, "901" -> 901, "Vehicle_901" -> 901
+ * ENHANCED: Better pattern matching for various vehicle naming conventions
  */
 function extractVehicleNumber(vehicleId: string): number | null {
-  // Try to extract number from various formats
-  const patterns = [
-    /Truck\s+(\d+)/i,    // "Truck 77"
-    /Vehicle\s+(\d+)/i,  // "Vehicle 77"
-    /^(\d+)$/,           // "901"
-    /^\w+(\d+)$/         // "V8" -> 8, "OR70" -> 70
-  ]
+  console.log(`🔍 Extracting vehicle number from: "${vehicleId}"`);
   
-  for (const pattern of patterns) {
-    const match = vehicleId.match(pattern)
+  // Clean the input
+  const cleanId = vehicleId.trim();
+  
+  // Try to extract number from various formats (prioritized by specificity)
+  const patterns = [
+    /(?:Truck|Vehicle)\s*[_-]?\s*(\d+)/i,  // "Truck 77", "Vehicle_901", "Truck-84"
+    /^(\d+)$/,                             // Pure numbers: "901"
+    /(\d+)$/,                              // Any ending number: "V8" -> 8, "OR70" -> 70
+    /^\w*(\d{2,3})\w*$/,                   // 2-3 digit numbers in any context
+    /(77|84|901|70)/,                      // Specific known truck numbers
+  ];
+  
+  for (let i = 0; i < patterns.length; i++) {
+    const pattern = patterns[i];
+    const match = cleanId.match(pattern);
     if (match) {
-      return parseInt(match[1] || match[0], 10)
+      const extractedNumber = parseInt(match[1] || match[0], 10);
+      console.log(`  ✅ Pattern ${i + 1} matched: "${pattern}" -> ${extractedNumber}`);
+      return extractedNumber;
     }
   }
   

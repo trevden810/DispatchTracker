@@ -2,6 +2,7 @@
 // Purpose: Show exactly what fields FileMaker returns vs what we expect
 
 import { NextResponse } from 'next/server'
+import { FileMakerResponse } from '../../../lib/types'
 
 const FILEMAKER_CONFIG = {
   baseUrl: 'https://modd.mainspringhost.com',
@@ -49,7 +50,7 @@ export async function GET() {
       })
     })
     
-    const queryData = await queryResponse.json()
+    const queryData: FileMakerResponse = await queryResponse.json()
     
     if (!queryData.response?.data) {
       return NextResponse.json({ 
@@ -59,7 +60,28 @@ export async function GET() {
     }
     
     // Step 3: Analyze the raw field data
-    const analysis = {
+    const analysis: {
+      totalRecords: number
+      fieldAnalysis: Array<{
+        recordIndex: number
+        totalFields: number
+        allFieldNames: string[]
+        sampleFieldValues: Record<string, any>
+      }>
+      truckIdAnalysis: {
+        recordsWithTruckIds: number
+        truckIdFieldPatterns: string[]
+        sampleTruckIds: any[]
+      }
+      expectedFields: {
+        present: Array<{
+          field: string
+          value: any
+          type: string
+        }>
+        missing: string[]
+      }
+    } = {
       totalRecords: queryData.response.data.length,
       fieldAnalysis: [],
       truckIdAnalysis: {
@@ -88,7 +110,7 @@ export async function GET() {
     ]
     
     // Analyze each record
-    queryData.response.data.forEach((record, index) => {
+    queryData.response.data.forEach((record: { fieldData: Record<string, any>, recordId: string, modId: string }, index: number) => {
       const fieldData = record.fieldData
       
       console.log(`\nRecord ${index + 1} Raw Fields:`)
@@ -104,7 +126,7 @@ export async function GET() {
         'Truck_ID'
       ]
       
-      let truckIdFound = null
+      let truckIdFound: { fieldName: string; value: any } | null = null
       possibleTruckFields.forEach(fieldName => {
         if (fieldData[fieldName] !== undefined) {
           truckIdFound = {
@@ -144,7 +166,7 @@ export async function GET() {
           recordIndex: index + 1,
           totalFields: allFields.length,
           allFieldNames: allFields,
-          sampleFieldValues: Object.entries(fieldData).slice(0, 10).reduce((obj, [key, value]) => {
+          sampleFieldValues: Object.entries(fieldData).slice(0, 10).reduce((obj: Record<string, any>, [key, value]) => {
             obj[key] = value
             return obj
           }, {})
@@ -153,7 +175,13 @@ export async function GET() {
     })
     
     // Step 4: Return comprehensive analysis
-    const result = {
+    const result: {
+      success: boolean
+      message: string
+      analysis: typeof analysis
+      recommendations: string[]
+      rawSampleRecord: Record<string, any> | null
+    } = {
       success: true,
       message: 'Raw FileMaker field analysis complete',
       analysis,
@@ -169,7 +197,7 @@ export async function GET() {
     } else {
       result.recommendations.push(`✅ Found truck IDs in ${analysis.truckIdAnalysis.recordsWithTruckIds}/${analysis.totalRecords} records`)
       
-      const uniquePatterns = [...new Set(analysis.truckIdAnalysis.truckIdFieldPatterns)]
+      const uniquePatterns = Array.from(new Set(analysis.truckIdAnalysis.truckIdFieldPatterns))
       if (uniquePatterns.length > 1) {
         result.recommendations.push(`⚠️ Multiple truck ID field patterns: ${uniquePatterns.join(', ')}`)
       }

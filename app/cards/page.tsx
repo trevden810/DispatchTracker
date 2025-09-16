@@ -63,21 +63,59 @@ export default function VehicleCards() {
 
   const fetchTrackingData = async () => {
     try {
-      const response = await fetch('/api/tracking')
-      const data = await response.json()
-      
-      if (data.success) {
-        setTrackingData(data.data)
+      // Fetch both vehicle data and correlation data in parallel
+      const [vehicleResponse, trackingResponse] = await Promise.all([
+        fetch('/api/vehicles'),
+        fetch('/api/tracking')
+      ])
+
+      const vehicleData = await vehicleResponse.json()
+      const trackingData = await trackingResponse.json()
+
+      if (vehicleData.success && trackingData.success) {
+        // Merge vehicle data with correlation data to create TrackingData format
+        const mergedData: TrackingData[] = vehicleData.data.map((vehicle: any) => {
+          // Find the correlation data for this vehicle
+          const correlation = trackingData.data.find((corr: any) => corr.vehicleId === vehicle.id)
+
+          return {
+            vehicleId: vehicle.id,
+            vehicleName: vehicle.name,
+            vehicleLocation: vehicle.location ? {
+              lat: vehicle.location.latitude,
+              lng: vehicle.location.longitude,
+              address: vehicle.location.address
+            } : null,
+            assignedJob: correlation?.assignedJob || null,
+            proximity: correlation?.proximity ? {
+              isAtJob: correlation.proximity.isAtJobSite || false,
+              distance: correlation.proximity.distance,
+              status: correlation.proximity.status || 'no-location'
+            } : null,
+            lastUpdated: vehicle.lastUpdated,
+            diagnostics: vehicle.diagnostics,
+            routeInfo: correlation?.routeInfo || null
+          }
+        })
+
+        console.log('🔍 VALIDATION LOG: Merged tracking data structure:', {
+          mergedLength: mergedData.length,
+          firstItem: mergedData[0],
+          firstItemKeys: mergedData[0] ? Object.keys(mergedData[0]) : null
+        })
+
+        setTrackingData(mergedData)
         setError(null)
         setLastRefresh(new Date())
-        console.log('🔍 CARDS PAGE LOCATION DEBUG: Received tracking data:', data.data?.slice(0, 2).map(v => ({
+
+        console.log('🔍 CARDS PAGE LOCATION DEBUG: Final merged data:', mergedData.slice(0, 2).map(v => ({
           vehicleId: v.vehicleId,
           vehicleName: v.vehicleName,
-          vehicleLocation: v.vehicleLocation,
-          hasLocation: !!(v.vehicleLocation?.lat && v.vehicleLocation?.lng)
+          hasLocation: !!(v.vehicleLocation?.lat && v.vehicleLocation?.lng),
+          hasJob: !!v.assignedJob
         })))
       } else {
-        setError(data.error || 'Failed to load tracking data')
+        setError(vehicleData.error || trackingData.error || 'Failed to load tracking data')
       }
     } catch (err) {
       setError('Network error loading tracking data')

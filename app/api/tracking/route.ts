@@ -39,7 +39,7 @@ export async function GET(request: Request) {
     
     const vehicles = vehicleData.data
     console.log(`✅ Retrieved ${vehicles.length} vehicles`)
-    console.log('🔍 TRACKING LOCATION DEBUG: Vehicle location data sample:', vehicles.slice(0, 2).map(v => ({
+    console.log('🔍 TRACKING LOCATION DEBUG: Vehicle location data sample:', vehicles.slice(0, 2).map((v: any) => ({
       id: v.id,
       name: v.name,
       location: v.location,

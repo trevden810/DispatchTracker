@@ -139,8 +139,8 @@ export async function GET() {
       
       if (truckIdFound) {
         analysis.truckIdAnalysis.recordsWithTruckIds++
-        analysis.truckIdAnalysis.truckIdFieldPatterns.push(truckIdFound.fieldName)
-        analysis.truckIdAnalysis.sampleTruckIds.push(truckIdFound.value)
+        analysis.truckIdAnalysis.truckIdFieldPatterns.push((truckIdFound as any).fieldName)
+        analysis.truckIdAnalysis.sampleTruckIds.push((truckIdFound as any).value)
       } else {
         console.log('❌ NO TRUCK ID FOUND in record', index + 1)
       }

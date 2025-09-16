@@ -1,5 +1,6 @@
 // Debug tracking endpoint - logs correlation details to console
 import { NextResponse } from 'next/server'
+import { Job } from '../../../lib/types'
 
 export async function GET() {
   try {
@@ -36,8 +37,15 @@ export async function GET() {
     
     // Step 2: Analyze job truck assignments
     console.log('\n2️⃣ Analyzing Job Truck Assignments:')
-    const jobs = jobsData.data
-    const jobsWithTrucks = jobs.filter(job => job.truckId)
+    console.log('Jobs data type validation:')
+    console.log('- jobsData.data type:', typeof jobsData.data)
+    console.log('- jobsData.data is array:', Array.isArray(jobsData.data))
+    if (Array.isArray(jobsData.data) && jobsData.data.length > 0) {
+      console.log('- First job keys:', Object.keys(jobsData.data[0]))
+      console.log('- First job sample:', JSON.stringify(jobsData.data[0], null, 2))
+    }
+    const jobs: Job[] = jobsData.data as Job[]
+    const jobsWithTrucks = jobs.filter((job: Job) => job.truckId)
     
     console.log(`Total jobs: ${jobs.length}`)
     console.log(`Jobs with truckId: ${jobsWithTrucks.length}`)
@@ -62,7 +70,7 @@ export async function GET() {
         console.log(`  ${i + 1}. Job ${job.id}: truckId="${job.truckId}", customer="${job.customer}"`)
       })
       
-      const truckIds = [...new Set(jobsWithTrucks.map(job => job.truckId))].sort()
+      const truckIds = Array.from(new Set(jobsWithTrucks.map(job => job.truckId).filter(id => id !== undefined))).sort()
       console.log(`\nUnique truck IDs: [${truckIds.join(', ')}]`)
     }
     
@@ -81,12 +89,12 @@ export async function GET() {
     // Step 4: Test matching
     if (jobsWithTrucks.length > 0) {
       console.log('\n4️⃣ Testing Vehicle-Job Matching:')
-      const truckIds = [...new Set(jobsWithTrucks.map(job => job.truckId))]
+      const truckIds = Array.from(new Set(jobsWithTrucks.map(job => job.truckId).filter(id => id !== undefined)))
       
       sampleVehicleNames.forEach(name => {
         const extractedNumber = extractVehicleNumber(name)
         if (extractedNumber) {
-          const hasJobs = truckIds.includes(extractedNumber.toString())
+          const hasJobs = truckIds.includes(extractedNumber)
           console.log(`  "${name}" (${extractedNumber}) -> ${hasJobs ? '✅ HAS JOBS' : '❌ No jobs'}`)
         }
       })
@@ -97,7 +105,7 @@ export async function GET() {
       debug: {
         totalJobs: jobs.length,
         jobsWithTrucks: jobsWithTrucks.length,
-        truckIds: jobsWithTrucks.length > 0 ? [...new Set(jobsWithTrucks.map(job => job.truckId))].sort() : [],
+        truckIds: jobsWithTrucks.length > 0 ? Array.from(new Set(jobsWithTrucks.map(job => job.truckId).filter(id => id !== undefined))).sort() : [],
         sampleJobs: jobs.slice(0, 3).map(job => ({
           id: job.id,
           truckId: job.truckId,

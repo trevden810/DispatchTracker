@@ -26,7 +26,7 @@ interface TrackingData {
     isAtJob: boolean
     distance?: number
     status: 'at-location' | 'nearby' | 'en-route' | 'far' | 'no-location'
-  }
+  } | null
   lastUpdated: string
   diagnostics?: {
     engineStatus: 'on' | 'off' | 'idle'
@@ -70,6 +70,12 @@ export default function VehicleCards() {
         setTrackingData(data.data)
         setError(null)
         setLastRefresh(new Date())
+        console.log('🔍 CARDS PAGE LOCATION DEBUG: Received tracking data:', data.data?.slice(0, 2).map(v => ({
+          vehicleId: v.vehicleId,
+          vehicleName: v.vehicleName,
+          vehicleLocation: v.vehicleLocation,
+          hasLocation: !!(v.vehicleLocation?.lat && v.vehicleLocation?.lng)
+        })))
       } else {
         setError(data.error || 'Failed to load tracking data')
       }
@@ -154,10 +160,17 @@ export default function VehicleCards() {
     )
   }
 
+  // Debug logging for proximity
+  console.log('Tracking data proximity check:', trackingData.map(t => ({
+    vehicleId: t.vehicleId,
+    vehicleName: t.vehicleName,
+    proximity: t.proximity
+  })))
+
   const summary = {
     total: trackingData.length,
     withJobs: trackingData.filter(t => t.assignedJob).length,
-    atJobs: trackingData.filter(t => t.proximity.isAtJob).length,
+    atJobs: trackingData.filter(t => t.proximity?.isAtJob).length, // Safe access
     withDiagnostics: trackingData.filter(t => t.diagnostics).length,
     // 🚛 NEW: Route metrics
     withRoutes: trackingData.filter(t => t.routeInfo).length,

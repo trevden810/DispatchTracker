@@ -39,8 +39,14 @@ export async function GET(request: Request) {
     
     const vehicles = vehicleData.data
     console.log(`✅ Retrieved ${vehicles.length} vehicles`)
-    
-    // Step 2: Fetch jobs from FileMaker 
+    console.log('🔍 TRACKING LOCATION DEBUG: Vehicle location data sample:', vehicles.slice(0, 2).map(v => ({
+      id: v.id,
+      name: v.name,
+      location: v.location,
+      hasLocation: !!(v.location?.latitude && v.location?.longitude)
+    })))
+
+    // Step 2: Fetch jobs from FileMaker
     console.log('📋 Fetching job data from FileMaker...')
     const jobParams = new URLSearchParams({
       limit: '50',
@@ -155,12 +161,17 @@ export async function GET(request: Request) {
     const summary = geographicCorrelation.getCorrelationSummary(geographicCorrelations)
     const correlatedVehicles = correlations.filter(c => c.assignedJob !== null).length
     const atLocationCount = correlations.filter(c => c.proximity?.isAtJobSite).length
-    
+
     console.log(`📊 Correlation Summary:`)
     console.log(`   Total correlations: ${summary.totalCorrelations}`)
     console.log(`   High confidence: ${summary.highConfidence}`)
     console.log(`   Vehicles with jobs: ${correlatedVehicles}/${vehicles.length}`)
     console.log(`   At job locations: ${atLocationCount}`)
+    console.log('🔍 TRACKING LOCATION DEBUG: Final correlation data sample:', correlations.slice(0, 2).map(c => ({
+      vehicleId: c.vehicleId,
+      hasLocation: !!(c.proximity),
+      proximity: c.proximity
+    })))
     
     const processingTime = Date.now() - startTime
     console.log(`⚡ Enhanced tracking completed in ${processingTime}ms`)

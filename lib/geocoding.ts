@@ -25,8 +25,19 @@ export async function geocodeAddress(address: string): Promise<GeocodingResult |
   }
 
   try {
+    // Enhance address with location context if it's incomplete
+    let enhancedAddress = cleanAddress
+    if (!cleanAddress.toLowerCase().includes('usa') &&
+        !cleanAddress.toLowerCase().includes('united states') &&
+        !cleanAddress.match(/\b[A-Z]{2}\b/)) { // No state code
+      // Try with USA first
+      enhancedAddress = `${cleanAddress}, USA`
+    }
+
+    console.log(`🗺️ Geocoding: "${cleanAddress}" → "${enhancedAddress}"`)
+
     // Use Nominatim (OpenStreetMap) geocoding - free and reliable
-    const encodedAddress = encodeURIComponent(cleanAddress)
+    const encodedAddress = encodeURIComponent(enhancedAddress)
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1&countrycodes=us`,
       {

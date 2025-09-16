@@ -11,13 +11,20 @@ const SAMSARA_CONFIG = {
 async function fetchVehicleStats() {
   try {
     console.log('🚗 Fetching current vehicle stats from Samsara...')
-    
+
+    // Diagnostic logs for API call
+    console.log('🔍 SAMSARA DIAGNOSTIC: Token present:', !!SAMSARA_CONFIG.token)
+    console.log('🔍 SAMSARA DIAGNOSTIC: Token starts with:', SAMSARA_CONFIG.token ? SAMSARA_CONFIG.token.substring(0, 10) + '...' : 'NO TOKEN')
+    console.log('🔍 SAMSARA DIAGNOSTIC: Base URL:', SAMSARA_CONFIG.baseUrl)
+
     // Use the stats endpoint with multiple types for comprehensive data
     const statsUrl = `${SAMSARA_CONFIG.baseUrl}/fleet/vehicles/stats`
     const params = new URLSearchParams({
       types: 'gps,engineStates,fuelPercents,obdOdometerMeters'
     })
-    
+
+    console.log('🔍 SAMSARA DIAGNOSTIC: Full URL:', `${statsUrl}?${params}`)
+
     const response = await fetch(`${statsUrl}?${params}`, {
       headers: {
         'Authorization': `Bearer ${SAMSARA_CONFIG.token}`,
@@ -29,13 +36,17 @@ async function fetchVehicleStats() {
       signal: AbortSignal.timeout(10000) // 10 second timeout
     })
 
+    console.log('🔍 SAMSARA DIAGNOSTIC: Response status:', response.status)
+    console.log('🔍 SAMSARA DIAGNOSTIC: Response ok:', response.ok)
+
     if (!response.ok) {
       throw new Error(`Samsara Stats API error: ${response.status}`)
     }
 
     const data = await response.json()
     console.log(`📊 Retrieved stats for ${data.data?.length || 0} vehicles`)
-    
+    console.log('🔍 VEHICLE LOCATION DEBUG: Raw Samsara response sample:', JSON.stringify(data.data?.slice(0, 2), null, 2))
+
     return data.data || []
     
   } catch (error) {
@@ -82,6 +93,14 @@ export async function GET() {
         longitude: 0,
         address: 'GPS Unavailable'
       }
+
+      console.log(`🔍 VEHICLE LOCATION DEBUG: ${vehicle.name} - GPS data:`, {
+        hasGps: !!gpsData,
+        latitude: gpsData?.latitude,
+        longitude: gpsData?.longitude,
+        address: gpsData?.reverseGeo?.formattedLocation,
+        finalLocation: location
+      })
       
       // Extract speed (convert to MPH if needed)
       const speed = gpsData?.speedMilesPerHour || 0

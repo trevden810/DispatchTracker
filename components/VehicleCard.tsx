@@ -28,7 +28,7 @@ interface VehicleData {
     isAtJob: boolean
     distance?: number
     status: 'at-location' | 'nearby' | 'en-route' | 'far' | 'no-location'
-  }
+  } | null
   lastUpdated: string
   // Enhanced Samsara vehicle diagnostics
   diagnostics?: {
@@ -76,15 +76,17 @@ interface VehicleCardProps {
 
 export default function VehicleCard({ vehicle, className = '' }: VehicleCardProps) {
   const [isFlipped, setIsFlipped] = useState(false)
-  
+
   // Debug logging
   console.log(`Vehicle ${vehicle.vehicleName} flip state:`, isFlipped)
+  console.log(`Vehicle ${vehicle.vehicleName} proximity:`, vehicle.proximity)
+  console.log(`🔍 VEHICLE CARD LOCATION DEBUG: ${vehicle.vehicleName} - vehicleLocation:`, vehicle.vehicleLocation)
 
   // Enhanced driver behavior analysis based on REAL Samsara data
   const getDriverBehaviorStatus = () => {
     const speed = vehicle.diagnostics?.speed || 0
     const engineStatus = vehicle.diagnostics?.engineStatus || 'unknown'
-    const isAtJob = vehicle.proximity.isAtJob
+    const isAtJob = vehicle.proximity?.isAtJob ?? false
     const hasJob = !!vehicle.assignedJob
     
     // Debug logging for real data
@@ -315,7 +317,7 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
     return 'text-red-600'
   }
 
-  const statusConfig = getStatusConfig(vehicle.proximity.status)
+  const statusConfig = getStatusConfig(vehicle.proximity?.status || 'no-location')
 
   return (
     <div className={`vehicle-card-container ${className}`}>
@@ -344,7 +346,7 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
             <div className="flex items-center space-x-3">
               <div className="bg-gradient-pepmove p-3 rounded-lg relative">
                 <Truck className="h-6 w-6 text-white" />
-                {vehicle.proximity.isAtJob && (
+                {vehicle.proximity?.isAtJob && (
                   <div className={`absolute -top-1 -right-1 h-3 w-3 rounded-full ${statusConfig.pulse}`}></div>
                 )}
               </div>
@@ -427,11 +429,11 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
                         : 'text-lime-700'
                     }`}>{vehicle.assignedJob.status}</span>
                   </span>
-                  {vehicle.proximity.distance !== undefined && (
+                  {vehicle.proximity?.distance !== undefined && (
                     <span className={`text-sm font-medium ${
-                      vehicle.proximity.isAtJob ? 'text-emerald-600' : 'text-gray-600'
+                      vehicle.proximity?.isAtJob ? 'text-emerald-600' : 'text-gray-600'
                     }`}>
-                      {vehicle.proximity.isAtJob ? '📍 On Location' : `${formatDistance(vehicle.proximity.distance)} away`}
+                      {vehicle.proximity?.isAtJob ? '📍 On Location' : `${formatDistance(vehicle.proximity.distance)} away`}
                     </span>
                   )}
                 </div>
@@ -470,11 +472,11 @@ export default function VehicleCard({ vehicle, className = '' }: VehicleCardProp
               <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${statusConfig.color}`}>
                 {statusConfig.icon}
                 <span className="ml-2 capitalize">
-                  {vehicle.proximity.status.replace('-', ' ')}
+                  {vehicle.proximity?.status?.replace('-', ' ') || 'No location data'}
                 </span>
               </span>
               <span className="text-sm font-medium text-gray-700">
-                {vehicle.proximity.distance ? formatDistance(vehicle.proximity.distance) : '—'}
+                {vehicle.proximity?.distance ? formatDistance(vehicle.proximity.distance) : '—'}
               </span>
             </div>
           </div>

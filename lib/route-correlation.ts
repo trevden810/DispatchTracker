@@ -50,7 +50,7 @@ export function correlateVehiclesWithRouteAssignments(
     console.log(`  ${index + 1}. Job ${job.id}: truckId=${job.truckId} (type: ${typeof job.truckId}), customer=${job.customer || 'N/A'}, status=${job.status}`)
     
     if (job.truckId !== null && job.truckId !== undefined) {
-      const truckId = typeof job.truckId === 'number' ? job.truckId : parseInt(job.truckId.toString(), 10)
+      const truckId = typeof job.truckId === 'number' ? job.truckId : parseInt((job.truckId as string | number).toString(), 10)
       if (!isNaN(truckId) && truckId > 0) {
         if (!jobsByTruck.has(truckId)) {
           jobsByTruck.set(truckId, [])

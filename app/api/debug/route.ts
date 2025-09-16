@@ -3,10 +3,41 @@
 
 import { NextResponse } from 'next/server'
 
+interface SamsaraTestResult {
+  success: boolean;
+  vehicleCount?: number;
+  sampleVehicleNames?: string[];
+  extractedNumbers?: (number | null)[];
+  error?: string;
+}
+
+interface FilemakerTestResult {
+  success: boolean;
+  totalJobs?: number;
+  jobsWithTruckIds?: number;
+  sampleTruckIds?: any[];
+  truckIdTypes?: string[];
+  jobSample?: any[];
+  error?: string;
+}
+
+interface CorrelationTestResult {
+  vehicleNumbers: number[];
+  truckIds: number[];
+  potentialMatches: number[];
+  matchCount: number;
+  diagnosis: string;
+}
+
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
-  const results = {
+  const results: {
+    timestamp: string;
+    samsaraTest: SamsaraTestResult | null;
+    filemakerTest: FilemakerTestResult | null;
+    correlationTest: CorrelationTestResult | null;
+  } = {
     timestamp: new Date().toISOString(),
     samsaraTest: null,
     filemakerTest: null,
@@ -32,8 +63,8 @@ export async function GET() {
       results.samsaraTest = {
         success: true,
         vehicleCount: vehicles.length,
-        sampleVehicleNames: vehicles.slice(0, 5).map(v => v.name),
-        extractedNumbers: vehicles.slice(0, 5).map(v => {
+        sampleVehicleNames: vehicles.slice(0, 5).map((v: any) => v.name),
+        extractedNumbers: vehicles.slice(0, 5).map((v: any) => {
           const name = v.name
           // Test extraction
           const patterns = [
@@ -42,7 +73,7 @@ export async function GET() {
             /^V(\d+)$/i,
             /^OR\s+(\d+)$/i
           ]
-          
+
           for (const pattern of patterns) {
             const match = name?.match(pattern)
             if (match) {
@@ -63,7 +94,7 @@ export async function GET() {
   } catch (error) {
     results.samsaraTest = {
       success: false,
-      error: error.message
+      error: (error as Error).message
     }
   }
   
@@ -80,16 +111,16 @@ export async function GET() {
       const jobsData = await jobsResponse.json()
       const jobs = jobsData.data || []
       
-      const jobsWithTrucks = jobs.filter(job => job.truckId !== null && job.truckId !== undefined && job.truckId !== '')
-      const truckIds = jobsWithTrucks.map(job => job.truckId)
-      
+      const jobsWithTrucks = jobs.filter((job: any) => job.truckId !== null && job.truckId !== undefined && job.truckId !== '')
+      const truckIds = jobsWithTrucks.map((job: any) => job.truckId)
+
       results.filemakerTest = {
         success: true,
         totalJobs: jobs.length,
         jobsWithTruckIds: jobsWithTrucks.length,
         sampleTruckIds: truckIds.slice(0, 5),
-        truckIdTypes: truckIds.slice(0, 5).map(id => typeof id),
-        jobSample: jobs.slice(0, 3).map(job => ({
+        truckIdTypes: truckIds.slice(0, 5).map((id: any) => typeof id),
+        jobSample: jobs.slice(0, 3).map((job: any) => ({
           id: job.id,
           truckId: job.truckId,
           customer: job.customer,
@@ -106,16 +137,16 @@ export async function GET() {
   } catch (error) {
     results.filemakerTest = {
       success: false,
-      error: error.message
+      error: (error as Error).message
     }
   }
   
   // Test 3: Correlation analysis
   if (results.samsaraTest?.success && results.filemakerTest?.success) {
-    const vehicleNumbers = results.samsaraTest.extractedNumbers.filter(n => n !== null)
-    const truckIds = results.filemakerTest.sampleTruckIds.map(id => 
+    const vehicleNumbers = results.samsaraTest.extractedNumbers?.filter((n: number | null) => n !== null) || []
+    const truckIds = results.filemakerTest.sampleTruckIds?.map((id: any) =>
       typeof id === 'number' ? id : parseInt(id?.toString() || '0', 10)
-    ).filter(id => !isNaN(id) && id > 0)
+    ).filter((id: number) => !isNaN(id) && id > 0) || []
     
     const matches = vehicleNumbers.filter(vNum => truckIds.includes(vNum))
     
@@ -124,7 +155,7 @@ export async function GET() {
       truckIds: truckIds,
       potentialMatches: matches,
       matchCount: matches.length,
-      diagnosis: matches.length === 0 ? 
+      diagnosis: matches.length === 0 ?
         'NO MATCHES: Vehicle numbers and truck IDs don\'t overlap' :
         `${matches.length} potential matches found`
     }
@@ -141,7 +172,7 @@ export async function GET() {
       filemaker: results.filemakerTest?.success ?
         `${results.filemakerTest.jobsWithTruckIds} of ${results.filemakerTest.totalJobs} jobs have truck assignments` :
         'Fix FileMaker API connection first',
-      correlation: results.correlationTest?.matchCount > 0 ?
+      correlation: (results.correlationTest?.matchCount || 0) > 0 ?
         'Vehicle-job correlation should work with current data' :
         'No overlap between vehicle numbers and job truck IDs - check data consistency'
     }

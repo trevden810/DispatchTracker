@@ -157,4 +157,24 @@ export interface ApiResponse<T> {
   totalRecords?: number
   timestamp: string
   processingTime?: number  // Time taken to process request in milliseconds
+  enhancedFields?: {
+    available: boolean
+    fields: string[]
+    message: string
+  }
+  correlationMetrics?: {
+    totalVehicles: number
+    totalJobs: number
+    correlatedVehicles: number
+    atLocationCount: number
+    confidenceBreakdown: {
+      high: number
+      medium: number
+      low: number
+    }
+    averageDistance: number
+    correlationMethods: Record<string, number>
+    systemType: string
+  }
+  fallbackMessage?: string
 }

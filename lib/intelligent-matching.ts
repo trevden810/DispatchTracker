@@ -121,7 +121,7 @@ function extractAllNumbers(vehicleName: string): number[] {
     })
   }
   
-  return [...new Set(numbers)] // Remove duplicates
+  return Array.from(new Set(numbers)) // Remove duplicates
 }
 
 /**
@@ -282,7 +282,7 @@ function findPatternMatches(cleanName: string, allTruckIds: Set<number>): number
     }
   }
   
-  return [...new Set(matches)]
+  return Array.from(new Set(matches))
 }
 
 /**
@@ -296,9 +296,9 @@ function findLocationBasedMatch(
   let closestMatch: { jobs: Job[], nextJob: Job | undefined, distance: number, customer: string } | null = null
   let shortestDistance = Infinity
   
-  for (const [truckId, jobs] of jobsByTruckId.entries()) {
+  jobsByTruckId.forEach((jobs, truckId) => {
     const activeJob = findNextIncompleteJob(jobs)
-    
+
     if (activeJob?.location) {
       const distance = calculateDistance(
         vehicle.lat,
@@ -306,7 +306,7 @@ function findLocationBasedMatch(
         activeJob.location.lat,
         activeJob.location.lng
       )
-      
+
       // Only consider if vehicle is very close (within 2 miles)
       if (distance < 2.0 && distance < shortestDistance) {
         shortestDistance = distance
@@ -318,7 +318,7 @@ function findLocationBasedMatch(
         }
       }
     }
-  }
+  })
   
   return closestMatch
 }

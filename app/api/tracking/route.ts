@@ -70,7 +70,7 @@ export async function GET(request: Request) {
     
     // Step 4: Create vehicle-job correlation results
     const correlations: VehicleJobCorrelation[] = []
-    const jobMap = new Map(jobs.map(job => [job.id, job]))
+    const jobMap = new Map(jobs.map((job: any) => [job.id, job]))
     
     // Group geographic correlations by vehicle
     const vehicleCorrelationMap = new Map<string, typeof geographicCorrelations>()

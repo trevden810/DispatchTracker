@@ -43,7 +43,7 @@ export function createDemoJobs(): Job[] {
         lat: 39.7264,
         lng: -105.1565,
         address: '14500 W COLFAX AVE, LAKEWOOD, CO 80401',
-        source: 'corrected-assignment'
+        source: 'mock'
       }
     },
     {
@@ -147,8 +147,8 @@ export function createDemoJobs(): Job[] {
       location: {
         lat: 40.4774,
         lng: -105.0178,
-        address: 'WINDSOR, CO GOLDEN, CO', 
-        source: 'real-data-corrected'
+        address: 'WINDSOR, CO GOLDEN, CO',
+        source: 'mock'
       }
     },
     {

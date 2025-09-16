@@ -1,13 +1,30 @@
 // DispatchTracker - Enhanced Type Definitions
 // Complete FileMaker integration with all requested fields
 
+export interface VehicleData {
+  id: string
+  name: string
+  status: 'active' | 'idle' | 'offline'
+  location: {
+    latitude: number
+    longitude: number
+    address?: string
+  }
+  engineState?: 'On' | 'Off' | 'Idle' | string
+  speed?: number
+  fuelLevel?: number
+  lastUpdated: string
+  externalIds?: Record<string, string>
+  diagnostics?: any
+}
+
 export interface FileMakerJobRecord {
   // Original Fields
   _kp_job_id: number
   job_date: string
   job_status: string
   job_type: string
-  '*kf*trucks_id': number
+  "*kf*trucks_id": string | number | null  // CRITICAL FIX: Original asterisk notation
 
   // ✅ ENHANCED FIELDS NOW AVAILABLE
   time_arival?: string | null      // Driver arrival timestamp
@@ -16,11 +33,10 @@ export interface FileMakerJobRecord {
   due_date?: string | null         // Job deadline
   Customer_C1?: string | null      // Customer identifier (Note: Capital C)
 
-  // 🚛 CRITICAL ROUTING FIELDS (SUPPORT BOTH PATTERNS)
-  '*kf*route_id'?: number | null     // Route assignment ID (asterisk pattern)
-  '_kf_route_id'?: number | null     // Route assignment ID (underscore pattern)
-  '*kf*driver_id'?: number | null    // Driver assignment ID (asterisk pattern) 
-  '_kf_driver_id'?: number | null    // Driver assignment ID (underscore pattern)
+  // 🚛 CRITICAL ROUTING FIELDS (CORRECTED FIELD NAMES)
+  _kf_route_id?: number | null     // Route assignment ID (underscore pattern)
+  _kf_driver_id?: number | null    // Driver assignment ID (underscore pattern) 
+  _kf_lead_id?: number | null      // Lead driver ID
   order_C1?: number | null         // Stop sequence number (C1 in your screenshot)
   order_C2?: number | null         // Secondary order field
   address_C2?: string | null       // Secondary/return address
@@ -29,10 +45,11 @@ export interface FileMakerJobRecord {
   job_status_driver?: string | null // Driver-specific status
 
   // Additional existing fields
-  '_kf_client_code_id'?: string | null
+  _kf_client_code_id?: string | null
   notes_call_ahead?: string | null
   notes_driver?: string | null
   _kf_disposition?: string | null
+  _kf_notification_id?: string | null
 }
 
 export interface Job {
@@ -50,8 +67,9 @@ export interface Job {
   dueDate?: string | null          // From due_date
   
   // 🚛 ROUTING PROPERTIES (CORRECTLY MAPPED)
-  routeId?: number | null          // From '*kf*route_id' (FIXED: correct FileMaker field name)
-  driverId?: number | null         // From '*kf*driver_id' (FIXED: correct FileMaker field name)
+  routeId?: number | null          // From '_kf_route_id' (FIXED: correct FileMaker field name)
+  driverId?: number | null         // From '_kf_driver_id' (FIXED: correct FileMaker field name)
+  leadId?: number | null           // From '_kf_lead_id' (FIXED: lead driver ID)
   stopOrder?: number | null        // From order_C1 (sequence in route)
   secondaryOrder?: number | null   // From order_C2
   secondaryAddress?: string | null // From address_C2 (return location)

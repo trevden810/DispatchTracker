@@ -1,5 +1,5 @@
-// DispatchTracker - Enhanced Vehicle-Job Correlation with Route Logic
-// Accurate job assignment using FileMaker route data
+// DispatchTracker - FIXED Vehicle-Job Correlation
+// Enhanced number extraction to handle all vehicle naming patterns
 
 import { Job } from './types'
 
@@ -26,96 +26,89 @@ export interface RouteAssignment {
 }
 
 /**
- * ENHANCED: Correlate vehicles to jobs using FileMaker route assignments
- * This fixes the issue where vehicles weren't showing proper job assignments
+ * FIXED: Correlate vehicles to jobs using enhanced vehicle number extraction
  */
 export function correlateVehiclesWithRouteAssignments(
   vehicles: Vehicle[],
   jobs: Job[]
 ): RouteAssignment[] {
-  console.log('🚛 Enhanced correlation: Using FileMaker route assignments')
+  console.log('🚛 FIXED correlation: Enhanced vehicle number extraction')
   console.log(`📊 Input data: ${vehicles.length} vehicles, ${jobs.length} jobs`)
   
-  // Group jobs by route ID and truck ID
-  const jobsByRoute = new Map<number, Job[]>()
+  // Debug: Log all vehicle names to understand patterns
+  console.log('\n🚛 ALL VEHICLES:')
+  vehicles.forEach((vehicle, index) => {
+    const extractedNumber = extractVehicleNumber(vehicle.name)
+    console.log(`  ${index + 1}. "${vehicle.name}" -> ${extractedNumber || 'FAILED'}`)
+  })
+  
+  // Group jobs by truck ID
   const jobsByTruck = new Map<number, Job[]>()
   
-  // Debug: Log all job data for analysis
-  console.log('\n📋 ANALYZING ALL JOBS:')
+  console.log('\n📋 ALL JOBS WITH TRUCK IDS:')
   jobs.forEach((job, index) => {
-    console.log(`Job ${index + 1}: ID=${job.id}, truckId=${job.truckId}, routeId=${job.routeId}, stopOrder=${job.stopOrder}, customer=${job.customer || 'N/A'}`)
+    console.log(`  ${index + 1}. Job ${job.id}: truckId=${job.truckId} (type: ${typeof job.truckId}), customer=${job.customer || 'N/A'}, status=${job.status}`)
     
-    // Group by route ID (from *kf*route_id)
-    if (job.routeId) {
-      if (!jobsByRoute.has(job.routeId)) {
-        jobsByRoute.set(job.routeId, [])
+    if (job.truckId !== null && job.truckId !== undefined) {
+      const truckId = typeof job.truckId === 'number' ? job.truckId : parseInt(job.truckId.toString(), 10)
+      if (!isNaN(truckId) && truckId > 0) {
+        if (!jobsByTruck.has(truckId)) {
+          jobsByTruck.set(truckId, [])
+        }
+        jobsByTruck.get(truckId)!.push(job)
+        console.log(`    ✅ Added to truck ${truckId} group`)
+      } else {
+        console.log(`    ❌ Invalid truckId: ${job.truckId}`)
       }
-      jobsByRoute.get(job.routeId)!.push(job)
-    }
-    
-    // Group by truck ID (from *kf*trucks_id)
-    if (job.truckId) {
-      if (!jobsByTruck.has(job.truckId)) {
-        jobsByTruck.set(job.truckId, [])
-      }
-      jobsByTruck.get(job.truckId)!.push(job)
+    } else {
+      console.log(`    ⚠️ No truckId for job ${job.id}`)
     }
   })
   
-  console.log(`\n📊 Grouped data: ${jobsByRoute.size} routes, ${jobsByTruck.size} truck assignments`)
-  
-  // Debug: Show truck assignment groups
-  console.log('\n🚛 TRUCK ASSIGNMENTS:')
+  console.log(`\n📊 Grouped ${jobsByTruck.size} truck assignments:`)
   jobsByTruck.forEach((truckJobs, truckId) => {
     console.log(`  Truck ${truckId}: ${truckJobs.length} jobs`)
   })
   
   const routeAssignments: RouteAssignment[] = []
   
-  // Process each vehicle
-  console.log('\n🔍 PROCESSING VEHICLES:')
+  // Process each vehicle with enhanced matching
+  console.log('\n🔍 VEHICLE-JOB MATCHING:')
   vehicles.forEach(vehicle => {
-    // 🔧 CRITICAL FIX: Use vehicle.name instead of vehicle.id for extraction
-    // The Samsara vehicle.name contains "Truck 77" while vehicle.id is a long numeric string
     const vehicleNumber = extractVehicleNumber(vehicle.name)
-    console.log(`\nVehicle: ${vehicle.name} (ID: ${vehicle.id})`)
-    console.log(`  Extracted number: ${vehicleNumber}`)
+    console.log(`\n🚛 Vehicle: "${vehicle.name}"`)
+    console.log(`   Extracted number: ${vehicleNumber || 'NONE'}`)
     
     if (vehicleNumber) {
-      // Find jobs assigned to this truck
       const assignedJobs = jobsByTruck.get(vehicleNumber) || []
-      console.log(`  Found ${assignedJobs.length} assigned jobs`)
+      console.log(`   Jobs found: ${assignedJobs.length}`)
       
       if (assignedJobs.length > 0) {
-        // Sort jobs by stop order (order_C1)
+        // Sort jobs by stop order
         const sortedJobs = assignedJobs
           .filter(job => job.stopOrder !== null && job.stopOrder !== undefined)
           .sort((a, b) => (a.stopOrder || 0) - (b.stopOrder || 0))
         
-        console.log(`  Jobs with stop order: ${sortedJobs.length}`)
-        sortedJobs.forEach(job => {
-          console.log(`    Stop ${job.stopOrder}: Job ${job.id} - ${job.customer || 'Unknown Customer'} (${job.status})`)
-        })
+        console.log(`   Jobs with stop order: ${sortedJobs.length}`)
         
-        const routeId = sortedJobs[0]?.routeId || 0
-        
-        // Find current position in route - be more flexible with completion status
-        const completedJobs = sortedJobs.filter(job => {
-          const isCompleted = !!(job.completionTime || 
-            job.driverStatus === 'Completed' ||
-            ['Complete', 'Done', 'Delivered', 'Successful', 'Finished', 'Accomplished', 'Completed'].includes(job.status))
-          return isCompleted
-        })
-        
+        // Find next incomplete job
         const nextJob = sortedJobs.find(job => {
-          const isNotCompleted = !(job.completionTime || 
-            job.driverStatus === 'Completed' ||
-            ['Complete', 'Done', 'Delivered', 'Successful', 'Finished', 'Accomplished', 'Completed'].includes(job.status))
-          return isNotCompleted
+          const isIncomplete = !(
+            job.completionTime || 
+            ['Complete', 'Done', 'Delivered', 'Completed'].includes(job.status)
+          )
+          return isIncomplete
         })
         
-        console.log(`  Completed jobs: ${completedJobs.length}`)
-        console.log(`  Next job: ${nextJob ? `${nextJob.id} (${nextJob.customer})` : 'None'}`)
+        const completedJobs = sortedJobs.filter(job => {
+          const isComplete = !!(
+            job.completionTime || 
+            ['Complete', 'Done', 'Delivered', 'Completed'].includes(job.status)
+          )
+          return isComplete
+        })
+        
+        const routeId = sortedJobs[0]?.routeId || vehicleNumber
         
         const assignment: RouteAssignment = {
           vehicleId: vehicle.id,
@@ -134,52 +127,59 @@ export function correlateVehiclesWithRouteAssignments(
         
         routeAssignments.push(assignment)
         
-        console.log(`  ✅ Assignment created: Route ${routeId}, Stop ${nextJob?.stopOrder || 'N/A'}, Progress ${assignment.progress.percentComplete}%`)
+        console.log(`   ✅ MATCH: Route ${routeId}, Next: ${nextJob?.customer || 'None'}, Progress: ${assignment.progress.percentComplete}%`)
       } else {
-        console.log(`  ⚠️ No assigned jobs found for truck number ${vehicleNumber}`)
+        console.log(`   ⚠️ No jobs found for truck ${vehicleNumber}`)
       }
     } else {
-      console.log(`  ❌ Could not extract vehicle number from "${vehicle.id}"`)
+      console.log(`   ❌ Could not extract vehicle number`)
     }
   })
   
-  console.log(`\n🎯 CORRELATION RESULTS: ${routeAssignments.length} vehicles with route assignments`)
+  console.log(`\n🎯 FINAL RESULTS: ${routeAssignments.length}/${vehicles.length} vehicles matched to jobs`)
   
   return routeAssignments
 }
 
 /**
- * Extract numeric vehicle ID from vehicle identifier
- * Examples: "Truck 77" -> 77, "901" -> 901, "Vehicle_901" -> 901
- * ENHANCED: Better pattern matching for various vehicle naming conventions
+ * ENHANCED: Extract numeric vehicle ID from any vehicle naming pattern
+ * Handles: "Truck 96", "TRUCK 85", "V7", "V9", "OR 70", "901", etc.
  */
-function extractVehicleNumber(vehicleId: string): number | null {
-  console.log(`🔍 Extracting vehicle number from: "${vehicleId}"`);
+function extractVehicleNumber(vehicleName: string): number | null {
+  if (!vehicleName) return null
   
-  // Clean the input
-  const cleanId = vehicleId.trim();
+  const clean = vehicleName.trim().toUpperCase()
+  console.log(`    Analyzing: "${clean}"`)
   
-  // Try to extract number from various formats (prioritized by specificity)
+  // Enhanced patterns in order of specificity
   const patterns = [
-    /(?:Truck|Vehicle)\s*[_-]?\s*(\d+)/i,  // "Truck 77", "Vehicle_901", "Truck-84"
-    /^(\d+)$/,                             // Pure numbers: "901"
-    /(\d+)$/,                              // Any ending number: "V8" -> 8, "OR70" -> 70
-    /^\w*(\d{2,3})\w*$/,                   // 2-3 digit numbers in any context
-    /(77|84|901|70)/,                      // Specific known truck numbers
-  ];
+    // Explicit truck patterns
+    { pattern: /^TRUCK\s+(\d+)$/i, desc: 'TRUCK ##' },
+    { pattern: /^(\d+)$/, desc: 'Pure number' },
+    
+    // Vehicle with number patterns  
+    { pattern: /^V(\d+)$/i, desc: 'V##' },
+    { pattern: /^OR\s+(\d+)$/i, desc: 'OR ##' },
+    { pattern: /^TRUCK\s+(\d+)\b/i, desc: 'TRUCK ## (with suffix)' },
+    
+    // General patterns
+    { pattern: /(\d{2,3})/, desc: '2-3 digit number anywhere' },
+    { pattern: /(\d+)/, desc: 'Any number' }
+  ]
   
-  for (let i = 0; i < patterns.length; i++) {
-    const pattern = patterns[i];
-    const match = cleanId.match(pattern);
+  for (const { pattern, desc } of patterns) {
+    const match = clean.match(pattern)
     if (match) {
-      const extractedNumber = parseInt(match[1] || match[0], 10);
-      console.log(`  ✅ Pattern ${i + 1} matched: "${pattern}" -> ${extractedNumber}`);
-      return extractedNumber;
+      const number = parseInt(match[1] || match[0], 10)
+      if (!isNaN(number) && number > 0 && number < 10000) {
+        console.log(`    ✅ Pattern "${desc}" matched -> ${number}`)
+        return number
+      }
     }
   }
   
-  console.log(`  ❌ No patterns matched for: "${cleanId}"`);
-  return null;
+  console.log(`    ❌ No valid patterns matched`)
+  return null
 }
 
 /**
@@ -267,15 +267,12 @@ export function getRouteSummary(assignments: RouteAssignment[]): {
   const totalStops = assignments.reduce((sum, a) => sum + a.progress.totalStops, 0)
   const averageProgress = totalStops > 0 ? Math.round((completedStops / totalStops) * 100) : 0
   
-  // Count vehicles currently at job locations (would need proximity calculation)
-  const vehiclesAtLocation = 0 // Placeholder - requires proximity data
-  
   return {
     totalRoutes,
     activeVehicles,
     completedStops,
     totalStops,
     averageProgress,
-    vehiclesAtLocation
+    vehiclesAtLocation: 0
   }
 }

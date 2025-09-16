@@ -1,19 +1,6 @@
 // Enhanced Samsara Vehicles API Route with Real-time Engine State
 import { NextResponse } from 'next/server'
-
-interface Vehicle {
-  id: string
-  name: string
-  status: 'active' | 'idle' | 'offline'
-  location: {
-    lat: number
-    lng: number
-    address?: string
-  } | null
-  fuel_level_percent: number
-  speed_mph: number
-  last_updated: string
-}
+import { VehicleData } from '@/lib/types'
 
 const SAMSARA_CONFIG = {
   baseUrl: 'https://api.samsara.com',
@@ -64,7 +51,7 @@ export async function GET() {
     const vehicleStats = await fetchVehicleStats()
     
     // Transform Samsara stats data to our format
-    const vehicles: Vehicle[] = vehicleStats.map((vehicle: any) => {
+    const vehicles: VehicleData[] = vehicleStats.map((vehicle: any) => {
       // Extract current engine state (handle missing data gracefully)
       const engineState = vehicle.engineStates?.value || null
       const engineTimestamp = vehicle.engineStates?.time || null
@@ -87,10 +74,14 @@ export async function GET() {
       }
       const gpsData = vehicle.gps
       const location = gpsData ? {
-        lat: gpsData.latitude,
-        lng: gpsData.longitude,
+        latitude: gpsData.latitude,   // FIXED: Use latitude instead of lat
+        longitude: gpsData.longitude, // FIXED: Use longitude instead of lng
         address: gpsData.reverseGeo?.formattedLocation
-      } : null
+      } : {
+        latitude: 0,     // Default coordinates if GPS unavailable
+        longitude: 0,
+        address: 'GPS Unavailable'
+      }
       
       // Extract speed (convert to MPH if needed)
       const speed = gpsData?.speedMilesPerHour || 0
@@ -119,12 +110,14 @@ export async function GET() {
         name: vehicle.name || `Vehicle ${vehicle.id}`,
         status: status,
         location: location,
-        fuel_level_percent: fuelLevel,
-        speed_mph: speed,
-        last_updated: new Date().toISOString(),
+        engineState: engineStatus, // 'on', 'idle', 'off', or 'unknown'
+        speed: speed,
+        fuelLevel: fuelLevel,
+        lastUpdated: new Date().toISOString(),
+        externalIds: vehicle.externalIds || {},
         // Enhanced diagnostics with real Samsara data
         diagnostics: {
-          engineStatus: engineStatus, // 'on', 'idle', 'off', or 'unknown'
+          engineStatus: engineStatus,
           fuelLevel: fuelLevel,
           speed: speed,
           engineHours: Math.floor(Math.random() * 5000) + 1000, // Mock until we get engine hours endpoint

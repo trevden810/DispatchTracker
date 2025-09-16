@@ -30,11 +30,12 @@ function toRadians(degrees: number): number {
 
 /**
  * Check if vehicle is within proximity threshold of a location
+ * Updated to 0.25 mile threshold for more precise job site detection
  */
 export function isVehicleAtLocation(
   vehicleCoords: Coordinates, 
   targetCoords: Coordinates, 
-  thresholdMiles: number = 0.5
+  thresholdMiles: number = 0.25
 ): boolean {
   const distance = calculateDistance(vehicleCoords, targetCoords)
   return distance <= thresholdMiles
@@ -42,11 +43,12 @@ export function isVehicleAtLocation(
 
 /**
  * Get proximity status with distance
+ * Updated to 0.25 mile threshold for tighter geofencing
  */
 export function getProximityStatus(
   vehicleCoords: Coordinates,
   targetCoords: Coordinates,
-  thresholdMiles: number = 0.5
+  thresholdMiles: number = 0.25
 ): {
   isAt: boolean
   distance: number
@@ -58,7 +60,7 @@ export function getProximityStatus(
   
   if (distance <= thresholdMiles) {
     status = 'at-location'
-  } else if (distance <= thresholdMiles * 2) {
+  } else if (distance <= 0.5) {
     status = 'nearby'
   } else if (distance <= 10) {
     status = 'en-route'

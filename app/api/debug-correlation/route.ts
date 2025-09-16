@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server'
 export async function GET() {
   try {
     console.log('\n🔍 DEBUGGING CORRELATION ISSUE')
-    console.log('=' * 50)
+    console.log('='.repeat(50))
     
     // Step 1: Test jobs API directly
     console.log('\n1️⃣ Testing Jobs API:')

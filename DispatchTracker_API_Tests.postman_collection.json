@@ -1,0 +1,520 @@
+{
+  "info": {
+    "name": "DispatchTracker API Testing Suite",
+    "description": "Comprehensive tests for all DispatchTracker API endpoints",
+    "version": "1.0.0"
+  },
+  "item": [
+    {
+      "name": "1. Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/api/health",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "health"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Health check returns 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has success field', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('success');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Samsara Vehicles API",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/api/vehicles",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "vehicles"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Vehicles API returns 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has vehicles data', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('success', true);",
+              "    pm.expect(jsonData).to.have.property('data');",
+              "    pm.expect(jsonData.data).to.be.an('array');",
+              "});",
+              "",
+              "pm.test('Vehicles have GPS coordinates', function () {",
+              "    const jsonData = pm.response.json();",
+              "    if (jsonData.data && jsonData.data.length > 0) {",
+              "        const vehicle = jsonData.data[0];",
+              "        pm.expect(vehicle).to.have.property('location');",
+              "        pm.expect(vehicle.location).to.have.property('latitude');",
+              "        pm.expect(vehicle.location).to.have.property('longitude');",
+              "        pm.expect(vehicle.location.latitude).to.not.be.undefined;",
+              "        pm.expect(vehicle.location.longitude).to.not.be.undefined;",
+              "    }",
+              "});",
+              "",
+              "pm.test('Vehicle count matches expectation', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.count).to.be.greaterThan(40); // Expect 50+ vehicles",
+              "});",
+              "",
+              "// Store vehicle data for correlation tests",
+              "pm.test('Store vehicle data', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.globals.set('vehicleCount', jsonData.count);",
+              "    if (jsonData.data && jsonData.data.length > 0) {",
+              "        pm.globals.set('sampleVehicleId', jsonData.data[0].id);",
+              "        pm.globals.set('sampleVehicleName', jsonData.data[0].name);",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. FileMaker Jobs API - Basic",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/api/jobs",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "jobs"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Jobs API returns 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has jobs data', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('success');",
+              "    ",
+              "    if (jsonData.success) {",
+              "        pm.expect(jsonData).to.have.property('data');",
+              "        pm.expect(jsonData.data).to.be.an('array');",
+              "        console.log('Jobs API Success - Found', jsonData.data.length, 'jobs');",
+              "    } else {",
+              "        console.log('Jobs API Failed:', jsonData.error || 'Unknown error');",
+              "        console.log('Details:', jsonData.details || 'No details');",
+              "    }",
+              "});",
+              "",
+              "pm.test('Jobs have required fields', function () {",
+              "    const jsonData = pm.response.json();",
+              "    if (jsonData.success && jsonData.data && jsonData.data.length > 0) {",
+              "        const job = jsonData.data[0];",
+              "        pm.expect(job).to.have.property('id');",
+              "        pm.expect(job).to.have.property('status');",
+              "        pm.expect(job).to.have.property('date');",
+              "        ",
+              "        // Check for enhanced fields",
+              "        console.log('Sample job structure:');",
+              "        console.log('- ID:', job.id);",
+              "        console.log('- Status:', job.status);",
+              "        console.log('- Customer:', job.customer || 'N/A');",
+              "        console.log('- Address:', job.address || 'N/A');",
+              "        console.log('- TruckId:', job.truckId || 'N/A');",
+              "    }",
+              "});",
+              "",
+              "// Store job data for correlation tests",
+              "pm.test('Store job data', function () {",
+              "    const jsonData = pm.response.json();",
+              "    if (jsonData.success && jsonData.data) {",
+              "        pm.globals.set('jobCount', jsonData.data.length);",
+              "        if (jsonData.data.length > 0) {",
+              "            pm.globals.set('sampleJobId', jsonData.data[0].id);",
+              "        }",
+              "    } else {",
+              "        pm.globals.set('jobCount', 0);",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. FileMaker Jobs API - With Parameters",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/api/jobs?limit=10&active=true",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "jobs"],
+          "query": [
+            {
+              "key": "limit",
+              "value": "10"
+            },
+            {
+              "key": "active",
+              "value": "true"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Jobs API with parameters returns 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Limited results returned', function () {",
+              "    const jsonData = pm.response.json();",
+              "    if (jsonData.success && jsonData.data) {",
+              "        pm.expect(jsonData.data.length).to.be.at.most(10);",
+              "        console.log('Returned', jsonData.data.length, 'jobs with limit=10');",
+              "    }",
+              "});",
+              "",
+              "pm.test('Check for truck assignments', function () {",
+              "    const jsonData = pm.response.json();",
+              "    if (jsonData.success && jsonData.data) {",
+              "        const jobsWithTrucks = jsonData.data.filter(job => job.truckId && job.truckId !== '');",
+              "        console.log('Jobs with truck assignments:', jobsWithTrucks.length, '/', jsonData.data.length);",
+              "        ",
+              "        if (jobsWithTrucks.length > 0) {",
+              "            console.log('Sample truck assignments:');",
+              "            jobsWithTrucks.slice(0, 3).forEach((job, i) => {",
+              "                console.log(`- Job ${job.id}: Truck ${job.truckId}`);",
+              "            });",
+              "        }",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. FileMaker Authentication Test",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/api/jobs",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "jobs"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"testQuery\": {\n    \"query\": [{\"_kp_job_id\": \"*\"}],\n    \"limit\": 3\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('FileMaker test query works', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Test query returns data', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('success');",
+              "    ",
+              "    if (jsonData.success) {",
+              "        console.log('FileMaker test query successful');",
+              "        console.log('Found records:', jsonData.foundRecords || 0);",
+              "    } else {",
+              "        console.log('FileMaker test query failed:', jsonData.error);",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Geographic Correlation System",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/api/tracking",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "tracking"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Tracking API returns 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Correlation system operational', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('success', true);",
+              "    pm.expect(jsonData).to.have.property('data');",
+              "    pm.expect(jsonData.data).to.be.an('array');",
+              "});",
+              "",
+              "pm.test('Correlation metrics available', function () {",
+              "    const jsonData = pm.response.json();",
+              "    if (jsonData.correlationMetrics) {",
+              "        const metrics = jsonData.correlationMetrics;",
+              "        console.log('Correlation Metrics:');",
+              "        console.log('- Total vehicles:', metrics.totalVehicles);",
+              "        console.log('- Total jobs:', metrics.totalJobs);",
+              "        console.log('- Correlated vehicles:', metrics.correlatedVehicles);",
+              "        console.log('- At job locations:', metrics.atLocationCount);",
+              "        console.log('- Average distance:', metrics.averageDistance, 'miles');",
+              "        console.log('- Processing time:', jsonData.processingTime, 'ms');",
+              "    }",
+              "});",
+              "",
+              "pm.test('Check for actual correlations', function () {",
+              "    const jsonData = pm.response.json();",
+              "    const correlatedVehicles = jsonData.data.filter(item => item.assignedJob !== null);",
+              "    const atLocationVehicles = jsonData.data.filter(item => item.proximity && item.proximity.isAtJobSite);",
+              "    ",
+              "    console.log('Vehicles with job assignments:', correlatedVehicles.length);",
+              "    console.log('Vehicles at job locations:', atLocationVehicles.length);",
+              "    ",
+              "    if (correlatedVehicles.length > 0) {",
+              "        console.log('Sample correlations:');",
+              "        correlatedVehicles.slice(0, 3).forEach((item, i) => {",
+              "            const job = item.assignedJob;",
+              "            const prox = item.proximity;",
+              "            console.log(`${i+1}. Vehicle ${item.vehicleId} -> Job ${job.id} (${prox.distance} miles, ${prox.confidence})`);",
+              "        });",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Schedule Hygiene Analysis",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/api/tracking?scheduleHygiene=true",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "tracking"],
+          "query": [
+            {
+              "key": "scheduleHygiene",
+              "value": "true"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Schedule hygiene analysis works', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Schedule status included', function () {",
+              "    const jsonData = pm.response.json();",
+              "    if (jsonData.success && jsonData.data && jsonData.data.length > 0) {",
+              "        const sampleItem = jsonData.data[0];",
+              "        pm.expect(sampleItem).to.have.property('scheduleStatus');",
+              "        pm.expect(sampleItem.scheduleStatus).to.have.property('type');",
+              "        pm.expect(sampleItem.scheduleStatus).to.have.property('severity');",
+              "        pm.expect(sampleItem.scheduleStatus).to.have.property('message');",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Performance Test - All APIs",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/api/tracking?active=true",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "tracking"],
+          "query": [
+            {
+              "key": "active",
+              "value": "true"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Performance under 2000ms', function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+              "});",
+              "",
+              "pm.test('Processing time reported', function () {",
+              "    const jsonData = pm.response.json();",
+              "    if (jsonData.processingTime) {",
+              "        console.log('API processing time:', jsonData.processingTime, 'ms');",
+              "        console.log('Total response time:', pm.response.responseTime, 'ms');",
+              "        pm.expect(jsonData.processingTime).to.be.below(1000);",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Error Handling Test",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/api/jobs?limit=invalid",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "jobs"],
+          "query": [
+            {
+              "key": "limit",
+              "value": "invalid"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Handles invalid parameters gracefully', function () {",
+              "    // Should return 200 with default behavior or proper error",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 400, 422]);",
+              "});",
+              "",
+              "pm.test('Error response has proper structure', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('success');",
+              "    ",
+              "    if (!jsonData.success) {",
+              "        pm.expect(jsonData).to.have.property('error');",
+              "        console.log('Error handling test - Error:', jsonData.error);",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10. System Status Summary",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/api/tracking",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "tracking"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Generate system status report', function () {",
+              "    const vehicleCount = pm.globals.get('vehicleCount') || 0;",
+              "    const jobCount = pm.globals.get('jobCount') || 0;",
+              "    const sampleVehicle = pm.globals.get('sampleVehicleName') || 'N/A';",
+              "    ",
+              "    console.log('='.repeat(50));",
+              "    console.log('DISPATCHTRACKER SYSTEM STATUS REPORT');",
+              "    console.log('='.repeat(50));",
+              "    console.log('Vehicle Tracking: ' + (vehicleCount > 0 ? '✅ OPERATIONAL' : '❌ FAILED'));",
+              "    console.log('- Total vehicles:', vehicleCount);",
+              "    console.log('- Sample vehicle:', sampleVehicle);",
+              "    console.log('');",
+              "    console.log('Job Management: ' + (jobCount > 0 ? '✅ OPERATIONAL' : '❌ FAILED'));",
+              "    console.log('- Total jobs:', jobCount);",
+              "    console.log('');",
+              "    ",
+              "    const jsonData = pm.response.json();",
+              "    if (jsonData.correlationMetrics) {",
+              "        const metrics = jsonData.correlationMetrics;",
+              "        console.log('Geographic Correlation: ✅ OPERATIONAL');",
+              "        console.log('- Correlation rate:', ((metrics.correlatedVehicles / metrics.totalVehicles) * 100).toFixed(1) + '%');",
+              "        console.log('- Processing time:', jsonData.processingTime + 'ms');",
+              "        console.log('- System type:', metrics.systemType || 'geographic_correlation');",
+              "    }",
+              "    console.log('');",
+              "    console.log('Overall Status:', (vehicleCount > 0 && jobCount > 0) ? '🚀 PRODUCTION READY' : '⚠️  NEEDS ATTENTION');",
+              "    console.log('='.repeat(50));",
+              "});",
+              "",
+              "pm.test('System meets production criteria', function () {",
+              "    const vehicleCount = parseInt(pm.globals.get('vehicleCount')) || 0;",
+              "    const jobCount = parseInt(pm.globals.get('jobCount')) || 0;",
+              "    ",
+              "    pm.expect(vehicleCount, 'Vehicle count should be > 40').to.be.greaterThan(40);",
+              "    pm.expect(jobCount, 'Job count should be > 0').to.be.greaterThan(0);",
+              "    ",
+              "    const jsonData = pm.response.json();",
+              "    if (jsonData.processingTime) {",
+              "        pm.expect(jsonData.processingTime, 'Processing time should be < 1000ms').to.be.below(1000);",
+              "    }",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "https://your-deployment-url.vercel.app",
+      "type": "string"
+    }
+  ]
+}

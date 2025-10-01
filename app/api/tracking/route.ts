@@ -171,7 +171,8 @@ export async function GET(request: Request) {
         routeAssigned,
         confidenceBreakdown: {
           high: routeCorrelations.filter(c => c.confidence === 'high').length,
-          medium: routeCorrelations.filter(c => c.confidence === 'medium').length
+          medium: routeCorrelations.filter(c => c.confidence === 'medium').length,
+          low: 0
         },
         matchTypes: {
           truck: routeCorrelations.filter(c => c.matchType === 'truck').length,

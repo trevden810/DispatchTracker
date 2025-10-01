@@ -87,8 +87,8 @@ async function queryFileMaker(token: string, query: any): Promise<FileMakerRespo
 function transformJobRecord(record: { fieldData: FileMakerJobRecord }): Job {
   const fieldData = record.fieldData
   
-  // CRITICAL FIX: Use original asterisk notation from spec
-  const rawTruckId = fieldData["*kf*trucks_id"]  // FIXED: Original asterisk notation
+  // Parse truck ID
+  const rawTruckId = fieldData["*kf*trucks_id"]
   let truckId: number | undefined = undefined
   
   if (rawTruckId !== null && rawTruckId !== undefined) {
@@ -98,14 +98,62 @@ function transformJobRecord(record: { fieldData: FileMakerJobRecord }): Job {
     }
   }
   
-  // ENHANCED DEBUG: Show all potential truck/driver fields
-  console.log(`🔍 Job ${fieldData._kp_job_id} FIELD ANALYSIS:`)
-  console.log(`   *kf*trucks_id: '${rawTruckId}' -> parsed: ${truckId}`)
-  console.log(`   _kf_route_id: '${fieldData._kf_route_id}'`)
-  console.log(`   _kf_driver_id: '${fieldData._kf_driver_id}'`)
-  console.log(`   _kf_lead_id: '${fieldData._kf_lead_id}'`)
-  console.log(`   order_C1: '${fieldData.order_C1}'`)
+  // Parse route ID
+  const rawRouteId = fieldData._kf_route_id
+  let routeId: number | null = null
+  if (rawRouteId !== null && rawRouteId !== undefined) {
+    const parsed = typeof rawRouteId === 'string' ? parseInt(rawRouteId, 10) : Number(rawRouteId)
+    if (!isNaN(parsed)) {
+      routeId = parsed
+    }
+  }
+  
+  // Parse driver ID (can be string name or number)
+  const rawDriverId = fieldData._kf_driver_id
+  let driverId: number | null = null
+  let driverName: string | null = null
+  
+  if (rawDriverId !== null && rawDriverId !== undefined) {
+    if (typeof rawDriverId === 'string') {
+      // Check if it's a numeric string
+      const parsed = parseInt(rawDriverId, 10)
+      if (!isNaN(parsed)) {
+        driverId = parsed
+      } else {
+        // It's a driver name
+        driverName = rawDriverId
+      }
+    } else {
+      driverId = Number(rawDriverId)
+    }
+  }
+  
+  // Parse lead ID
+  const rawLeadId = fieldData._kf_lead_id
+  let leadId: number | null = null
+  let leadName: string | null = null
+  
+  if (rawLeadId !== null && rawLeadId !== undefined) {
+    if (typeof rawLeadId === 'string') {
+      const parsed = parseInt(rawLeadId, 10)
+      if (!isNaN(parsed)) {
+        leadId = parsed
+      } else {
+        leadName = rawLeadId
+      }
+    } else {
+      leadId = Number(rawLeadId)
+    }
+  }
+  
+  // ENHANCED DEBUG
+  console.log(`🔍 Job ${fieldData._kp_job_id} FIELD MAPPING:`)
+  console.log(`   *kf*trucks_id: '${rawTruckId}' -> ${truckId}`)
+  console.log(`   _kf_route_id: '${rawRouteId}' -> ${routeId}`)
+  console.log(`   _kf_driver_id: '${rawDriverId}' -> driver=${driverId}, name='${driverName}'`)
+  console.log(`   _kf_lead_id: '${rawLeadId}' -> lead=${leadId}, name='${leadName}'`)
   console.log(`   Customer: '${fieldData.Customer_C1}'`)
+  console.log(`   Address: '${fieldData.address_C1}'`)
   
   return {
     id: fieldData._kp_job_id,
@@ -114,17 +162,19 @@ function transformJobRecord(record: { fieldData: FileMakerJobRecord }): Job {
     type: fieldData.job_type,
     truckId: truckId,
     
-    // ✅ ENHANCED FIELDS - Now working!
+    // Enhanced fields
     customer: fieldData.Customer_C1 || null,
     address: fieldData.address_C1 || null,
     arrivalTime: fieldData.time_arival || null,
     completionTime: fieldData.time_complete || null,
     dueDate: fieldData.due_date || null,
     
-    // ✅ ROUTING FIELDS - Now working!
-    routeId: fieldData._kf_route_id || null,
-    driverId: fieldData._kf_driver_id || null,
-    leadId: fieldData._kf_lead_id || null,
+    // Routing fields with proper parsing
+    routeId: routeId,
+    driverId: driverId,
+    driverName: driverName,
+    leadId: leadId,
+    leadName: leadName,
     stopOrder: fieldData.order_C1 || null,
     secondaryOrder: fieldData.order_C2 || null,
     secondaryAddress: fieldData.address_C2 || null,
@@ -138,7 +188,7 @@ function transformJobRecord(record: { fieldData: FileMakerJobRecord }): Job {
     notesDriver: fieldData.notes_driver || null,
     disposition: fieldData._kf_disposition || null,
     
-    // Location will be added later via geocoding if needed
+    // Location will be added later
     location: null
   }
 }

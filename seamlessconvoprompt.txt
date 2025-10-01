@@ -1,97 +1,192 @@
-# DISPATCHTRACKER CONVERSATION CONTINUITY
-# Last Updated: September 16, 2025 at 10:30 PM MT
+# DispatchTracker - Seamless Context Handoff
 
-## CONVERSATION CONTEXT FOR NEXT SESSION
+## Current Project Status (October 1, 2025)
 
-### CURRENT STATUS: 🎉 PRODUCTION SUCCESS - LIVE AND OPERATIONAL!
+**Production URL**: https://www.pepmovetracker.info/cards  
+**Deployment**: Vercel via dispatch-tracker-git-master-trevor-bates-projects.vercel.app  
+**Status**: Functional with route-based correlation implemented
 
-**Major Achievement**: Successfully deployed to production and validated all systems
-**Current Status**: All APIs operational, ready for logistics team deployment
+## Recent Changes
 
-### PRODUCTION VALIDATION RESULTS ✅
-**Date**: September 16, 2025 4:08 PM MT
-**All Tests**: PASSED with flying colors
+### Route-Based Correlation (Implemented)
+- Replaced geographic correlation with route-based matching (geocoding was mock/non-functional)
+- Successfully matching 21 vehicles to jobs using FileMaker route IDs
+- Location: `/lib/route-correlation.ts`
+- Tracking API updated: `/app/api/tracking/route.ts`
 
-1. **Health Check**: ✅ 200 OK - System healthy, production environment confirmed
-2. **Vehicle Tracking**: ✅ 200 OK - 31KB data, real GPS coordinates (40.706992, -111.919275)
-3. **Jobs Integration**: ✅ 200 OK - Enhanced fields working (Customer: "Daniel Johnson", Address: "4555 Bays Water Dr")
-4. **Geographic Tracking**: ✅ 200 OK - Correlation engine operational, schedule monitoring active
+### FileMaker Integration (Validated)
+- Authentication: Working with credentials in .env files
+- Database: PEP2_1, Layout: jobs_api
+- Enhanced fields accessible: Customer_C1, address_C1, _kf_route_id, _kf_driver_id
+- Test suite: `/tests/test-filemaker-api.js`
 
-### WHAT WORKS PERFECTLY ✅
-1. **Production Deployment**: Live at https://www.pepmovetracker.info
-2. **FileMaker Integration**: Enhanced fields accessible, customer names and addresses working
-3. **Samsara Integration**: Real GPS coordinates, vehicle status operational
-4. **Geographic Correlation**: Revolutionary system processing vehicle assignments
-5. **Performance**: Fast response times, substantial data delivery
+## Known Issues
 
-### BREAKTHROUGH ACHIEVEMENTS ✅
-1. **Geographic Intelligence**: Works without truck ID dependency - REVOLUTIONARY
-2. **Enhanced Field Access**: All FileMaker fields accessible (Customer_C1, address_C1, etc.)
-3. **Production Deployment**: Custom domain working perfectly
-4. **Data Integration**: Seamless Samsara + FileMaker correlation
-5. **System Performance**: Sub-1000ms processing, production-grade reliability
+### Issue #1: Over-Matching Routes
+**Problem**: Multiple vehicles match same jobs due to substring matching
+- Vehicle "TRUCK 81" contains "1" → matches route "1"
+- Vehicle "TRUCK 85" contains "5" → matches route "5"
+- Results in duplicate job assignments
 
-### PRODUCTION METRICS ACHIEVED ✅
-- **Health API**: Fast and reliable
-- **Vehicle Data**: 31,969 bytes of rich vehicle information
-- **Job Data**: 5,450 bytes with enhanced fields
-- **Tracking Data**: 8,383 bytes of correlation processing
-- **All Endpoints**: 200 OK status, production ready
+**Impact**: Dashboard shows correct counts but same jobs appear on multiple vehicles
 
-### LATEST VALIDATION DATA
-**URLs Tested and Working**:
-- Health: https://www.pepmovetracker.info/api/health
-- Vehicles: https://www.pepmovetracker.info/api/vehicles  
-- Jobs: https://www.pepmovetracker.info/api/jobs?limit=10
-- Tracking: https://www.pepmovetracker.info/api/tracking
+**Solution Options**:
+1. Implement stricter matching (exact route designation in vehicle name)
+2. Add vehicle-to-route mapping table in FileMaker
+3. Use external IDs from Samsara for precise matching
+4. Implement one-to-one constraint (first match wins)
 
-**Sample Data Confirmed**:
-- Vehicle: "Truck 96" at coordinates [40.706992, -111.919275]
-- Job: ID 874401, Customer "Daniel Johnson", Address "4555 Bays Water Dr"
-- System: Production environment, all APIs configured
+**Priority**: Medium - System functional but needs refinement
 
-### FILES AND LOCATIONS
-- **Project Directory**: C:\Projects\DispatchTracker
-- **Production Results**: C:\Projects\DispatchTracker\app\cards\postmanoutput.txt
-- **Validation Summary**: C:\Projects\DispatchTracker\PRODUCTION_READINESS_FINAL.md
-- **All Systems**: Operational and production-ready
+### Issue #2: Geocoding Not Implemented
+**Problem**: Geographic proximity detection not working
+- Current geocoding in `/lib/gps-utils.ts` is mock implementation
+- Only recognizes 4 hardcoded cities
+- Real job addresses return null
 
-### CURRENT PRIORITY: DEPLOYMENT TO LOGISTICS TEAM
+**Impact**: Cannot detect when vehicles are physically at job sites
 
-#### IMMEDIATE NEXT STEPS
-1. **Enable User Access** - Grant access to primary logistics specialists (5-8 users)
-2. **Performance Monitoring** - Track system performance under real user load
-3. **User Training** - Guide logistics team through new capabilities
-4. **Feedback Collection** - Gather insights for optimization
+**Solution**: Implement Google Maps Geocoding API
+- File created: `/lib/gps-utils-geocoding.ts` (ready to integrate)
+- Requires: GOOGLE_MAPS_API_KEY in environment
+- Cost: $200/month free tier (~40,000 addresses)
 
-#### SECONDARY PRIORITIES  
-1. **Advanced Features** - Vehicle detail cards with flip animations
-2. **Enhanced Analytics** - Schedule hygiene dashboard
-3. **Mobile Optimization** - Field supervisor access
-4. **Scale Planning** - Prepare for 100+ user rollout
+**Priority**: High - Core feature for "on location" detection
 
-### TECHNICAL ARCHITECTURE SUMMARY
-- **Frontend**: Next.js 14 + React 18 + TypeScript + Tailwind CSS
-- **APIs**: Samsara Fleet (operational) + FileMaker Data API (operational)
-- **Intelligence**: Geographic correlation system (revolutionary breakthrough)
-- **Performance**: Production-grade with fast response times
-- **Deployment**: Vercel with custom domain (fully operational)
+## Next Development: Proximity-Based Indicators
 
-### KEY ACHIEVEMENTS TO CELEBRATE
-1. **Innovation**: Geographic intelligence eliminates truck ID dependency
-2. **Problem Solving**: Overcame 3-week field mapping blocker completely
-3. **Architecture**: Built robust, scalable fleet management system
-4. **Performance**: Optimized for real-time operation with 50+ vehicles
-5. **Production Success**: Live deployment with all systems operational
+### Feature Request
+Implement GPS proximity to job addresses as visual indicators for job site presence.
 
-### CONVERSATION STARTER FOR NEXT SESSION
-"DispatchTracker is now live in production and all validation tests have passed! The system is operational at https://www.pepmovetracker.info with real GPS tracking, enhanced FileMaker integration, and geographic correlation working perfectly. I'm ready to enable access for the logistics team and begin the user deployment phase."
+### Requirements
+**Distance Thresholds**:
+- **Green** (On Site): ≤ 2 miles from job address
+- **Yellow** (Nearby): 2-5 miles from job address  
+- **Red** (Far): > 5 miles from job address
 
-### SYSTEM STATE
-- **Production Deployment**: ✅ Live and operational
-- **All API Endpoints**: ✅ Tested and working perfectly
-- **Data Integration**: ✅ Samsara + FileMaker seamless
-- **Geographic Correlation**: ✅ Revolutionary system operational
-- **Overall Project**: ✅ PRODUCTION SUCCESS - Ready for team deployment
+**Implementation Steps**:
+1. Integrate Google Maps Geocoding API (use `/lib/gps-utils-geocoding.ts`)
+2. Geocode job addresses on first load (cache results)
+3. Calculate distance: vehicle GPS → job coordinates (use existing `calculateDistance()`)
+4. Add proximity indicator to vehicle cards UI
+5. Update location status display with distance and color coding
 
-The system represents a complete transformation from a 3-week blocked project to a live, operational fleet management solution with breakthrough geographic intelligence capabilities. All major technical challenges have been overcome and the system is ready for logistics team deployment.
+**Files to Modify**:
+- `/lib/gps-utils.ts` - Add proximity thresholds
+- `/app/api/tracking/route.ts` - Include distance calculation
+- `/components/VehicleCard.tsx` - Add proximity visual indicator
+- `/lib/types.ts` - Add proximity status to data types
+
+**Business Value**:
+- Real-time visibility of truck locations vs job sites
+- Automated "arrived on site" detection
+- Better dispatch decision making
+- Accurate arrival time tracking
+
+## FileMaker Data Structure
+
+### Job Assignment Fields
+- `*kf*trucks_id`: Mostly null/undefined
+- `_kf_route_id`: Primary assignment field (values: "1", "2", "3", "5", "WH")
+- `_kf_driver_id`: Driver names (sometimes populated)
+- `time_arival`: Arrival timestamp
+- `time_complete`: Completion timestamp
+- `address_C1`: Job address for geocoding
+
+### Current Assignment Pattern
+- **4/20** today's jobs have route assignments
+- Routes: 1, 3, 5 are active
+- No truck ID assignments in recent jobs
+- Route-based correlation is primary matching method
+
+## API Configuration
+
+### Samsara Fleet API
+```
+Token: samsara_api_VXKWxiewMU9DvBoEH1ttkHmHHOT1q8
+Endpoint: /fleet/vehicles/stats
+Types: gps,engineStates,fuelPercents,obdOdometerMeters
+Vehicles: 50 tracked (names: "Truck 96", "TRUCK 81", "V7", etc.)
+```
+
+### FileMaker Data API
+```
+Base URL: https://modd.mainspringhost.com
+Database: PEP2_1
+Layout: jobs_api
+Username: trevor_api
+Password: XcScS2yRoTtMo7
+Total Jobs: 544,175+
+```
+
+## Test Suite
+
+### Available Tests
+- `tests/test-filemaker-api.js` - FileMaker auth & queries
+- `tests/test-route-correlation.js` - Route matching validation
+- `tests/debug-vehicles.js` - Vehicle data structure
+- `tests/debug-jobs.js` - Job assignment analysis
+- `tests/test-today-jobs.js` - Today's job assignments
+
+### Running Tests
+```bash
+cd C:\Projects\DispatchTracker
+npm run dev  # Terminal 1
+node tests/test-route-correlation.js  # Terminal 2
+```
+
+## Project Structure
+```
+C:\Projects\DispatchTracker/
+├── app/
+│   ├── api/
+│   │   ├── vehicles/route.ts         # Samsara integration
+│   │   ├── jobs/route.ts             # FileMaker integration
+│   │   ├── tracking/route.ts         # Route correlation
+│   │   └── healthstatus/             # Vehicle diagnostics
+│   ├── cards/page.tsx                # Main dashboard
+│   └── health/                       # FleetHealth monitor
+├── lib/
+│   ├── route-correlation.ts          # Route matching logic
+│   ├── gps-utils.ts                  # Distance calculations (mock geocoding)
+│   ├── gps-utils-geocoding.ts        # Real geocoding (ready to integrate)
+│   └── types.ts                      # TypeScript definitions
+├── components/
+│   └── VehicleCard.tsx               # Vehicle display cards
+└── tests/                            # Test suite
+```
+
+## Development Workflow
+
+### Starting Development
+```bash
+cd C:\Projects\DispatchTracker
+npm run dev
+```
+
+### Testing Changes
+1. Update code
+2. Run relevant test from `/tests/`
+3. Check dashboard at http://localhost:3002/cards
+4. Deploy via `npm run deploy` (Vercel auto-deploy on git push)
+
+### Environment Variables
+Local: `.env.local`  
+Production: Vercel dashboard (already configured)
+
+## Handoff Context for New Conversation
+
+"Working on DispatchTracker at C:\Projects\DispatchTracker - fleet management app for PepMove. Just implemented route-based correlation (21 vehicles matched to jobs). Known issue: over-matching due to substring matching (TRUCK 81 matches route '1'). Need to implement proximity-based indicators: green ≤2mi, yellow 2-5mi, red >5mi from job address. Requires integrating Google Maps Geocoding API (template ready at /lib/gps-utils-geocoding.ts). Production live at https://www.pepmovetracker.info/cards."
+
+## Key Decisions Made
+- **Geocoding**: Deferred Google Maps integration, using route-based correlation
+- **Matching**: Route IDs primary (truck IDs mostly null in FileMaker)
+- **Job Query**: Today's jobs (100 limit) for better assignment data
+- **Correlation**: First-match algorithm, no deduplication yet
+
+## Success Metrics
+- ✅ 50 vehicles tracked with diagnostics
+- ✅ FileMaker API operational (544K+ jobs)
+- ✅ Route correlation working (21 matches)
+- ⏳ Proximity indicators (pending geocoding)
+- ⏳ One-to-one job assignment (pending refinement)

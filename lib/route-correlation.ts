@@ -1,278 +1,121 @@
-// DispatchTracker - FIXED Vehicle-Job Correlation
-// Enhanced number extraction to handle all vehicle naming patterns
+// Route-based correlation without geocoding
+// Uses FileMaker route assignments directly
 
-import { Job } from './types'
+import { Job, VehicleData } from './types'
 
-export interface Vehicle {
-  id: string
-  name: string
-  lat: number
-  lng: number
-  speed: number
-  status: string
-}
-
-export interface RouteAssignment {
+export interface RouteCorrelation {
   vehicleId: string
-  routeId: number
-  currentStop?: number
-  assignedJobs: Job[]
-  nextJob?: Job
-  progress: {
-    completedStops: number
-    totalStops: number
-    percentComplete: number
-  }
+  jobId: number
+  matchType: 'route' | 'driver' | 'truck'
+  confidence: 'high' | 'medium'
 }
 
 /**
- * FIXED: Correlate vehicles to jobs using enhanced vehicle number extraction
+ * Match vehicles to jobs using route/driver IDs
+ * Enhanced with flexible matching and detailed logging
  */
-export function correlateVehiclesWithRouteAssignments(
-  vehicles: Vehicle[],
+export async function correlateByRoute(
+  vehicles: VehicleData[],
   jobs: Job[]
-): RouteAssignment[] {
-  console.log('🚛 FIXED correlation: Enhanced vehicle number extraction')
-  console.log(`📊 Input data: ${vehicles.length} vehicles, ${jobs.length} jobs`)
+): Promise<RouteCorrelation[]> {
+  const correlations: RouteCorrelation[] = []
+  const assignedJobIds = new Set<number>() // Prevent duplicate job assignments
   
-  // Debug: Log all vehicle names to understand patterns
-  console.log('\n🚛 ALL VEHICLES:')
-  vehicles.forEach((vehicle, index) => {
-    const extractedNumber = extractVehicleNumber(vehicle.name)
-    console.log(`  ${index + 1}. "${vehicle.name}" -> ${extractedNumber || 'FAILED'}`)
-  })
-  
-  // Group jobs by truck ID
-  const jobsByTruck = new Map<number, Job[]>()
-  
-  console.log('\n📋 ALL JOBS WITH TRUCK IDS:')
-  jobs.forEach((job, index) => {
-    console.log(`  ${index + 1}. Job ${job.id}: truckId=${job.truckId} (type: ${typeof job.truckId}), customer=${job.customer || 'N/A'}, status=${job.status}`)
-    
-    if (job.truckId !== null && job.truckId !== undefined) {
-      const truckId = typeof job.truckId === 'number' ? job.truckId : parseInt((job.truckId as string | number).toString(), 10)
-      if (!isNaN(truckId) && truckId > 0) {
-        if (!jobsByTruck.has(truckId)) {
-          jobsByTruck.set(truckId, [])
-        }
-        jobsByTruck.get(truckId)!.push(job)
-        console.log(`    ✅ Added to truck ${truckId} group`)
-      } else {
-        console.log(`    ❌ Invalid truckId: ${job.truckId}`)
-      }
-    } else {
-      console.log(`    ⚠️ No truckId for job ${job.id}`)
-    }
-  })
-  
-  console.log(`\n📊 Grouped ${jobsByTruck.size} truck assignments:`)
-  jobsByTruck.forEach((truckJobs, truckId) => {
-    console.log(`  Truck ${truckId}: ${truckJobs.length} jobs`)
-  })
-  
-  const routeAssignments: RouteAssignment[] = []
-  
-  // Process each vehicle with enhanced matching
-  console.log('\n🔍 VEHICLE-JOB MATCHING:')
-  vehicles.forEach(vehicle => {
-    const vehicleNumber = extractVehicleNumber(vehicle.name)
-    console.log(`\n🚛 Vehicle: "${vehicle.name}"`)
-    console.log(`   Extracted number: ${vehicleNumber || 'NONE'}`)
-    
-    if (vehicleNumber) {
-      const assignedJobs = jobsByTruck.get(vehicleNumber) || []
-      console.log(`   Jobs found: ${assignedJobs.length}`)
-      
-      if (assignedJobs.length > 0) {
-        // Sort jobs by stop order
-        const sortedJobs = assignedJobs
-          .filter(job => job.stopOrder !== null && job.stopOrder !== undefined)
-          .sort((a, b) => (a.stopOrder || 0) - (b.stopOrder || 0))
-        
-        console.log(`   Jobs with stop order: ${sortedJobs.length}`)
-        
-        // Find next incomplete job
-        const nextJob = sortedJobs.find(job => {
-          const isIncomplete = !(
-            job.completionTime || 
-            ['Complete', 'Done', 'Delivered', 'Completed'].includes(job.status)
-          )
-          return isIncomplete
-        })
-        
-        const completedJobs = sortedJobs.filter(job => {
-          const isComplete = !!(
-            job.completionTime || 
-            ['Complete', 'Done', 'Delivered', 'Completed'].includes(job.status)
-          )
-          return isComplete
-        })
-        
-        const routeId = sortedJobs[0]?.routeId || vehicleNumber
-        
-        const assignment: RouteAssignment = {
-          vehicleId: vehicle.id,
-          routeId,
-          currentStop: nextJob?.stopOrder || undefined,
-          assignedJobs: sortedJobs,
-          nextJob,
-          progress: {
-            completedStops: completedJobs.length,
-            totalStops: sortedJobs.length,
-            percentComplete: sortedJobs.length > 0 
-              ? Math.round((completedJobs.length / sortedJobs.length) * 100)
-              : 0
-          }
-        }
-        
-        routeAssignments.push(assignment)
-        
-        console.log(`   ✅ MATCH: Route ${routeId}, Next: ${nextJob?.customer || 'None'}, Progress: ${assignment.progress.percentComplete}%`)
-      } else {
-        console.log(`   ⚠️ No jobs found for truck ${vehicleNumber}`)
-      }
-    } else {
-      console.log(`   ❌ Could not extract vehicle number`)
-    }
-  })
-  
-  console.log(`\n🎯 FINAL RESULTS: ${routeAssignments.length}/${vehicles.length} vehicles matched to jobs`)
-  
-  return routeAssignments
-}
-
-/**
- * ENHANCED: Extract numeric vehicle ID from any vehicle naming pattern
- * Handles: "Truck 96", "TRUCK 85", "V7", "V9", "OR 70", "901", etc.
- */
-function extractVehicleNumber(vehicleName: string): number | null {
-  if (!vehicleName) return null
-  
-  const clean = vehicleName.trim().toUpperCase()
-  console.log(`    Analyzing: "${clean}"`)
-  
-  // Enhanced patterns in order of specificity
-  const patterns = [
-    // Explicit truck patterns
-    { pattern: /^TRUCK\s+(\d+)$/i, desc: 'TRUCK ##' },
-    { pattern: /^(\d+)$/, desc: 'Pure number' },
-    
-    // Vehicle with number patterns  
-    { pattern: /^V(\d+)$/i, desc: 'V##' },
-    { pattern: /^OR\s+(\d+)$/i, desc: 'OR ##' },
-    { pattern: /^TRUCK\s+(\d+)\b/i, desc: 'TRUCK ## (with suffix)' },
-    
-    // General patterns
-    { pattern: /(\d{2,3})/, desc: '2-3 digit number anywhere' },
-    { pattern: /(\d+)/, desc: 'Any number' }
-  ]
-  
-  for (const { pattern, desc } of patterns) {
-    const match = clean.match(pattern)
-    if (match) {
-      const number = parseInt(match[1] || match[0], 10)
-      if (!isNaN(number) && number > 0 && number < 10000) {
-        console.log(`    ✅ Pattern "${desc}" matched -> ${number}`)
-        return number
-      }
-    }
-  }
-  
-  console.log(`    ❌ No valid patterns matched`)
-  return null
-}
-
-/**
- * Calculate proximity status for route-assigned jobs
- */
-export function calculateRouteProximity(
-  vehicle: Vehicle,
-  assignment: RouteAssignment
-): {
-  currentJobProximity?: {
-    distance: number
-    status: 'at-location' | 'nearby' | 'en-route' | 'far'
-    isAtJobSite: boolean
-  }
-  nextJobDistance?: number
-} {
-  if (!assignment.nextJob?.location) {
-    return {}
-  }
-  
-  const distance = calculateDistance(
-    vehicle.lat,
-    vehicle.lng,
-    assignment.nextJob.location.lat,
-    assignment.nextJob.location.lng
+  // Filter active jobs with route assignments
+  const activeJobs = jobs.filter(j => 
+    j.status !== 'Complete' && 
+    j.status !== 'Canceled' &&
+    (j.routeId || j.driverId || j.truckId)
   )
   
-  let status: 'at-location' | 'nearby' | 'en-route' | 'far'
+  console.log(`🔍 Correlation: ${vehicles.length} vehicles vs ${activeJobs.length} assigned jobs`)
   
-  if (distance <= 0.5) {
-    status = 'at-location'
-  } else if (distance <= 1.0) {
-    status = 'nearby'
-  } else if (distance <= 10.0) {
-    status = 'en-route'
-  } else {
-    status = 'far'
+  for (const vehicle of vehicles) {
+    // Extract identifiers
+    const vehicleNumber = extractVehicleNumber(vehicle.name)
+    const vehicleName = vehicle.name?.toLowerCase() || ''
+    
+    console.log(`  Checking ${vehicle.name} (number: ${vehicleNumber})`)
+    
+    // Try exact truck ID match
+    const truckMatch = activeJobs.find(j => 
+      j.truckId?.toString() === vehicleNumber &&
+      !assignedJobIds.has(j.id)
+    )
+    
+    if (truckMatch) {
+      console.log(`    ✅ Truck match: Job ${truckMatch.id}`)
+      correlations.push({
+        vehicleId: vehicle.id,
+        jobId: truckMatch.id,
+        matchType: 'truck',
+        confidence: 'high'
+      })
+      assignedJobIds.add(truckMatch.id)
+      continue
+    }
+    
+    // Try STRICT route ID match - exact match only, no substring matching
+    const routeMatch = activeJobs.find(j => {
+      if (!j.routeId || assignedJobIds.has(j.id)) return false
+      const routeStr = j.routeId.toString()
+      
+      // STRICT: Only match if vehicle number EXACTLY equals route ID
+      // This prevents "TRUCK 81" from matching route "1"
+      return vehicleNumber === routeStr
+    })
+    
+    if (routeMatch) {
+      console.log(`    ✅ Route match: Job ${routeMatch.id} (route: ${routeMatch.routeId})`)
+      correlations.push({
+        vehicleId: vehicle.id,
+        jobId: routeMatch.id,
+        matchType: 'route',
+        confidence: 'medium'
+      })
+      assignedJobIds.add(routeMatch.id)
+      continue
+    }
+    
+    // Try driver name match
+    if (vehicle.diagnostics?.driverName) {
+      const driverMatch = activeJobs.find(j =>
+        j.driverId && 
+        !assignedJobIds.has(j.id) &&
+        fuzzyMatchDriver(vehicle.diagnostics!.driverName!, j.driverId)
+      )
+      
+      if (driverMatch) {
+        console.log(`    ✅ Driver match: Job ${driverMatch.id}`)
+        correlations.push({
+          vehicleId: vehicle.id,
+          jobId: driverMatch.id,
+          matchType: 'driver',
+          confidence: 'medium'
+        })
+        assignedJobIds.add(driverMatch.id)
+      }
+    }
   }
   
-  return {
-    currentJobProximity: {
-      distance,
-      status,
-      isAtJobSite: distance <= 0.5
-    },
-    nextJobDistance: distance
-  }
+  console.log(`✅ Correlation complete: ${correlations.length} matches found`)
+  return correlations
 }
 
-/**
- * Haversine formula for calculating distance between two GPS points
- */
-function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 3959 // Earth's radius in miles
-  const dLat = toRadians(lat2 - lat1)
-  const dLng = toRadians(lng2 - lng1)
-  
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
-    Math.sin(dLng / 2) * Math.sin(dLng / 2)
-  
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-  
-  return R * c
+function extractVehicleNumber(name: string | undefined): string | null {
+  if (!name) return null
+  const match = name.match(/\d+/)
+  return match ? match[0] : null
 }
 
-function toRadians(degrees: number): number {
-  return degrees * (Math.PI / 180)
-}
-
-/**
- * Get route summary for dispatchers
- */
-export function getRouteSummary(assignments: RouteAssignment[]): {
-  totalRoutes: number
-  activeVehicles: number
-  completedStops: number
-  totalStops: number
-  averageProgress: number
-  vehiclesAtLocation: number
-} {
-  const totalRoutes = new Set(assignments.map(a => a.routeId)).size
-  const activeVehicles = assignments.length
-  const completedStops = assignments.reduce((sum, a) => sum + a.progress.completedStops, 0)
-  const totalStops = assignments.reduce((sum, a) => sum + a.progress.totalStops, 0)
-  const averageProgress = totalStops > 0 ? Math.round((completedStops / totalStops) * 100) : 0
+function fuzzyMatchDriver(driverName: string, jobDriver: string): boolean {
+  const normalize = (s: string) => s.toLowerCase().trim()
+  const d1 = normalize(driverName)
+  const d2 = normalize(jobDriver)
   
-  return {
-    totalRoutes,
-    activeVehicles,
-    completedStops,
-    totalStops,
-    averageProgress,
-    vehiclesAtLocation: 0
-  }
+  // Check if last names match
+  const lastName1 = d1.split(' ').pop()
+  const lastName2 = d2.split(' ').pop()
+  
+  return d1.includes(d2) || d2.includes(d1) || lastName1 === lastName2
 }

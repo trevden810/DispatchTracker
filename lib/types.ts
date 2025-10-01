@@ -67,9 +67,11 @@ export interface Job {
   dueDate?: string | null          // From due_date
   
   // 🚛 ROUTING PROPERTIES (CORRECTLY MAPPED)
-  routeId?: number | null          // From '_kf_route_id' (FIXED: correct FileMaker field name)
-  driverId?: number | null         // From '_kf_driver_id' (FIXED: correct FileMaker field name)
-  leadId?: number | null           // From '_kf_lead_id' (FIXED: lead driver ID)
+  routeId?: number | null          // From '_kf_route_id'
+  driverId?: number | null         // From '_kf_driver_id' (numeric ID)
+  driverName?: string | null       // Driver name if _kf_driver_id is string
+  leadId?: number | null           // From '_kf_lead_id' (numeric ID)
+  leadName?: string | null         // Lead name if _kf_lead_id is string
   stopOrder?: number | null        // From order_C1 (sequence in route)
   secondaryOrder?: number | null   // From order_C2
   secondaryAddress?: string | null // From address_C2 (return location)

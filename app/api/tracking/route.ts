@@ -3,7 +3,7 @@
 
 import { NextResponse } from 'next/server'
 import { VehicleJobCorrelation, ApiResponse } from '@/lib/types'
-import { geographicCorrelation } from '@/lib/geographic-correlation'
+import { correlateByRoute } from '@/lib/route-correlation'
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
@@ -46,11 +46,11 @@ export async function GET(request: Request) {
       hasLocation: !!(v.location?.latitude && v.location?.longitude)
     })))
 
-    // Step 2: Fetch jobs from FileMaker
+    // Step 2: Fetch jobs from FileMaker - Get today's jobs for better assignment data
     console.log('📋 Fetching job data from FileMaker...')
     const jobParams = new URLSearchParams({
-      limit: '50',
-      active: activeOnly ? 'true' : 'false'
+      limit: '100',
+      today: 'true'  // Get today's jobs which are more likely to have assignments
     })
     
     const jobResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3002'}/api/jobs?${jobParams}`)
@@ -68,19 +68,19 @@ export async function GET(request: Request) {
     const jobs = jobData.data
     console.log(`✅ Retrieved ${jobs.length} jobs`)
     
-    // Step 3: ENHANCED - Geographic Correlation System
-    console.log('🎯 Running geographic correlation analysis...')
-    const geographicCorrelations = await geographicCorrelation.correlateVehiclesWithJobs(vehicles, jobs)
+    // Step 3: Route-Based Correlation System
+    console.log('🎯 Running route-based correlation analysis...')
+    const routeCorrelations = await correlateByRoute(vehicles, jobs)
     
-    console.log(`✅ Generated ${geographicCorrelations.length} geographic correlations`)
+    console.log(`✅ Generated ${routeCorrelations.length} route-based correlations`)
     
     // Step 4: Create vehicle-job correlation results
     const correlations: VehicleJobCorrelation[] = []
     const jobMap = new Map(jobs.map((job: any) => [job.id, job]))
     
-    // Group geographic correlations by vehicle
-    const vehicleCorrelationMap = new Map<string, typeof geographicCorrelations>()
-    geographicCorrelations.forEach(corr => {
+    // Group route correlations by vehicle
+    const vehicleCorrelationMap = new Map<string, typeof routeCorrelations>()
+    routeCorrelations.forEach(corr => {
       if (!vehicleCorrelationMap.has(corr.vehicleId)) {
         vehicleCorrelationMap.set(corr.vehicleId, [])
       }
@@ -89,8 +89,8 @@ export async function GET(request: Request) {
     
     // Process each vehicle
     for (const vehicle of vehicles) {
-      const vehicleGeoCorrelations = vehicleCorrelationMap.get(vehicle.id) || []
-      const bestMatch = vehicleGeoCorrelations[0] // Best correlation (sorted by confidence & distance)
+      const vehicleRouteCorrelations = vehicleCorrelationMap.get(vehicle.id) || []
+      const bestMatch = vehicleRouteCorrelations[0] // Best match
       
       let assignedJob: any = null
       let proximity: any = null
@@ -103,47 +103,30 @@ export async function GET(request: Request) {
       if (bestMatch && jobMap.has(bestMatch.jobId)) {
         assignedJob = jobMap.get(bestMatch.jobId)
         
-        // Enhanced proximity information
+        // Route-based proximity (no GPS distance)
         proximity = {
-          distance: parseFloat(bestMatch.distance.toFixed(2)),
-          status: bestMatch.distance <= 0.5 ? 'at-location' : 
-                  bestMatch.distance <= 2 ? 'nearby' : 
-                  bestMatch.distance <= 10 ? 'en-route' : 'far',
-          isAtJobSite: bestMatch.distance <= 0.5,
+          distance: null,
+          status: 'route-assigned',
+          isAtJobSite: false,
           confidence: bestMatch.confidence,
-          matchingFactors: bestMatch.matchingFactors,
-          correlationMethod: bestMatch.correlationMethod
+          matchingFactors: [`Matched by ${bestMatch.matchType}`],
+          correlationMethod: 'route'
         }
         
-        // Enhanced schedule hygiene with geographic context
+        // Schedule status based on job data
         if (includeScheduleHygiene && assignedJob) {
-          if (bestMatch.confidence === 'high' && bestMatch.distance <= 0.5) {
-            if (assignedJob.arrivalTime && assignedJob.status !== 'Complete') {
-              scheduleStatus = {
-                type: 'incomplete_after_arrival',
-                severity: 'warning',
-                message: `Vehicle at job site but status is ${assignedJob.status}`,
-                actionNeeded: true
-              }
-            } else if (!assignedJob.arrivalTime && assignedJob.status === 'In Progress') {
-              scheduleStatus = {
-                type: 'missing_data',
-                severity: 'warning', 
-                message: 'Vehicle at job site but no arrival time recorded',
-                actionNeeded: true
-              }
-            } else {
-              scheduleStatus = {
-                type: 'normal',
-                severity: 'info',
-                message: `Vehicle on-site: ${bestMatch.matchingFactors.join(', ')}`
-              }
+          if (assignedJob.arrivalTime && assignedJob.status !== 'Complete') {
+            scheduleStatus = {
+              type: 'incomplete_after_arrival',
+              severity: 'warning',
+              message: `Job has arrival time but status is ${assignedJob.status}`,
+              actionNeeded: true
             }
-          } else if (bestMatch.confidence === 'medium') {
+          } else {
             scheduleStatus = {
               type: 'normal',
               severity: 'info',
-              message: `Possible assignment: ${bestMatch.matchingFactors.join(', ')}`
+              message: `Route assigned via ${bestMatch.matchType}`
             }
           }
         }
@@ -158,15 +141,13 @@ export async function GET(request: Request) {
     }
     
     // Step 5: Generate summary statistics
-    const summary = geographicCorrelation.getCorrelationSummary(geographicCorrelations)
     const correlatedVehicles = correlations.filter(c => c.assignedJob !== null).length
-    const atLocationCount = correlations.filter(c => c.proximity?.isAtJobSite).length
+    const routeAssigned = routeCorrelations.length
 
     console.log(`📊 Correlation Summary:`)
-    console.log(`   Total correlations: ${summary.totalCorrelations}`)
-    console.log(`   High confidence: ${summary.highConfidence}`)
+    console.log(`   Total correlations: ${routeCorrelations.length}`)
     console.log(`   Vehicles with jobs: ${correlatedVehicles}/${vehicles.length}`)
-    console.log(`   At job locations: ${atLocationCount}`)
+    console.log(`   Route assigned: ${routeAssigned}`)
     console.log('🔍 TRACKING LOCATION DEBUG: Final correlation data sample:', correlations.slice(0, 2).map(c => ({
       vehicleId: c.vehicleId,
       hasLocation: !!(c.proximity),
@@ -187,15 +168,17 @@ export async function GET(request: Request) {
         totalVehicles: vehicles.length,
         totalJobs: jobs.length,
         correlatedVehicles,
-        atLocationCount,
+        routeAssigned,
         confidenceBreakdown: {
-          high: summary.highConfidence,
-          medium: summary.mediumConfidence,
-          low: summary.lowConfidence
+          high: routeCorrelations.filter(c => c.confidence === 'high').length,
+          medium: routeCorrelations.filter(c => c.confidence === 'medium').length
         },
-        averageDistance: parseFloat(summary.averageDistance.toFixed(2)),
-        correlationMethods: summary.methodBreakdown,
-        systemType: 'geographic_correlation'
+        matchTypes: {
+          truck: routeCorrelations.filter(c => c.matchType === 'truck').length,
+          route: routeCorrelations.filter(c => c.matchType === 'route').length,
+          driver: routeCorrelations.filter(c => c.matchType === 'driver').length
+        },
+        systemType: 'route_correlation'
       }
     }
 

@@ -87,25 +87,19 @@ async function queryFileMaker(token: string, query: any): Promise<FileMakerRespo
 function transformJobRecord(record: { fieldData: FileMakerJobRecord }): Job {
   const fieldData = record.fieldData
   
-  // Parse truck ID
+  // Parse truck ID - KEEP AS STRING
   const rawTruckId = fieldData["*kf*trucks_id"]
-  let truckId: number | undefined = undefined
+  let truckId: string | undefined = undefined
   
-  if (rawTruckId !== null && rawTruckId !== undefined) {
-    const parsed = typeof rawTruckId === 'string' ? parseInt(rawTruckId, 10) : Number(rawTruckId)
-    if (!isNaN(parsed) && parsed > 0) {
-      truckId = parsed
-    }
+  if (rawTruckId !== null && rawTruckId !== undefined && rawTruckId !== '') {
+    truckId = String(rawTruckId).trim()
   }
   
-  // Parse route ID
+  // Parse route ID - KEEP AS STRING (can be "1", "5", "WH", etc)
   const rawRouteId = fieldData._kf_route_id
-  let routeId: number | null = null
-  if (rawRouteId !== null && rawRouteId !== undefined) {
-    const parsed = typeof rawRouteId === 'string' ? parseInt(rawRouteId, 10) : Number(rawRouteId)
-    if (!isNaN(parsed)) {
-      routeId = parsed
-    }
+  let routeId: string | null = null
+  if (rawRouteId && String(rawRouteId).trim() !== '') {
+    routeId = String(rawRouteId).trim()
   }
   
   // Parse driver ID (can be string name or number)

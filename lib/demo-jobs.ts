@@ -9,13 +9,13 @@ export function createDemoJobs(): Job[] {
       date: '09/16/2025', 
       status: 'In Progress',
       type: 'Delivery',
-      truckId: 77, // This matches Truck 77 from your fleet
+      truckId: "77", // This matches Truck 77 from your fleet
       customer: 'SHRINE OF ST ANNES SCHOOL',
       address: '6665 BALSAM ST, ARVADA, CO 80004',
       arrivalTime: null,
       completionTime: null,
       dueDate: '09/16/2025',
-      routeId: 1,
+      routeId: "1",
       driverId: 77,
       stopOrder: 1,
       location: {
@@ -30,13 +30,13 @@ export function createDemoJobs(): Job[] {
       date: '09/16/2025',
       status: 'Scheduled',
       type: 'Delivery', 
-      truckId: 81, // Proper job for TRUCK 81
+      truckId: "81", // Proper job for TRUCK 81
       customer: 'COLORADO MILLS MALL',
       address: '14500 W COLFAX AVE, LAKEWOOD, CO 80401',
       arrivalTime: null,
       completionTime: null,
       dueDate: '09/16/2025',
-      routeId: 9,
+      routeId: "9",
       driverId: 81,
       stopOrder: 1,
       location: {
@@ -51,13 +51,13 @@ export function createDemoJobs(): Job[] {
       date: '09/16/2025',
       status: 'Scheduled', 
       type: 'Pickup',
-      truckId: 85, // This matches TRUCK 85
+      truckId: "85", // This matches TRUCK 85
       customer: 'SONIC AUTOMOTIVE',
       address: '10501 W COLFAX AVE, LAKEWOOD, CO 80215',
       arrivalTime: null,
       completionTime: null, 
       dueDate: '09/16/2025',
-      routeId: 2,
+      routeId: "2",
       driverId: 85,
       stopOrder: 1,
       location: {
@@ -72,13 +72,13 @@ export function createDemoJobs(): Job[] {
       date: '09/16/2025',
       status: 'Entered',
       type: 'Delivery',
-      truckId: 56, // This matches TRUCK 56
+      truckId: "56", // This matches TRUCK 56
       customer: 'DENVER TECH CENTER',
       address: '7900 E UNION AVE, DENVER, CO 80237',
       arrivalTime: null,
       completionTime: null,
       dueDate: '09/16/2025', 
-      routeId: 3,
+      routeId: "3",
       driverId: 56,
       stopOrder: 1,
       location: {
@@ -93,13 +93,13 @@ export function createDemoJobs(): Job[] {
       date: '09/16/2025',
       status: 'In Progress', 
       type: 'Pickup',
-      truckId: 67, // This matches TRUCK 67
+      truckId: "67", // This matches TRUCK 67
       customer: 'WESTMINSTER PROMENADE',
       address: '10455 WESTMINSTER BLVD, WESTMINSTER, CO 80020',
       arrivalTime: '09:30 AM',
       completionTime: null,
       dueDate: '09/16/2025',
-      routeId: 4,
+      routeId: "4",
       driverId: 67,
       stopOrder: 1,
       location: {
@@ -114,13 +114,13 @@ export function createDemoJobs(): Job[] {
       date: '09/16/2025',
       status: 'Scheduled',
       type: 'Delivery', 
-      truckId: 74, // This matches TRUCK 74
+      truckId: "74", // This matches TRUCK 74
       customer: 'CHERRY CREEK MALL',
       address: '3000 E 1ST AVE, DENVER, CO 80206',
       arrivalTime: null,
       completionTime: null,
       dueDate: '09/16/2025',
-      routeId: 5, 
+      routeId: "5", 
       driverId: 74,
       stopOrder: 1,
       location: {
@@ -135,13 +135,13 @@ export function createDemoJobs(): Job[] {
       date: '09/16/2025', 
       status: 'Entered',
       type: 'Move',
-      truckId: 72, // CORRECTED: Real FileMaker data shows TRK 72
+      truckId: "72", // CORRECTED: Real FileMaker data shows TRK 72
       customer: 'FCI CONSTRUCTOS INC',
       address: 'WINDSOR, CO GOLDEN, CO',
       arrivalTime: null,
       completionTime: null,
       dueDate: '09/16/2025',
-      routeId: 6,
+      routeId: "6",
       driverId: 72,
       stopOrder: 2, // Route shows stops 2-3
       location: {
@@ -156,13 +156,13 @@ export function createDemoJobs(): Job[] {
       date: '09/16/2025',
       status: 'Entered',
       type: 'Delivery',
-      truckId: 86, // This matches TRUCK 86
+      truckId: "86", // This matches TRUCK 86
       customer: 'PARK MEADOWS MALL',
       address: '8405 PARK MEADOWS CENTER DR, LONE TREE, CO 80124',
       arrivalTime: null,
       completionTime: null,
       dueDate: '09/16/2025',
-      routeId: 7,
+      routeId: "7",
       driverId: 86, 
       stopOrder: 1,
       location: {
@@ -177,13 +177,13 @@ export function createDemoJobs(): Job[] {
       date: '09/16/2025',
       status: 'Scheduled',
       type: 'Pickup', 
-      truckId: 70, // This matches OR 70
+      truckId: "70", // This matches OR 70
       customer: 'FLATIRON CROSSING',
       address: '1 W FLATIRON CROSSING DR, BROOMFIELD, CO 80021',
       arrivalTime: null,
       completionTime: null,
       dueDate: '09/16/2025',
-      routeId: 8,
+      routeId: "8",
       driverId: 70,
       stopOrder: 1,
       location: {

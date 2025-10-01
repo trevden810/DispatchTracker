@@ -130,7 +130,7 @@ export async function GET() {
 }
 
 // Enhanced vehicle number extraction function
-function extractVehicleNumber(vehicleName: string): number | null {
+function extractVehicleNumber(vehicleName: string): string | null {
   if (!vehicleName) return null
   
   const clean = vehicleName.trim().toUpperCase()
@@ -149,9 +149,10 @@ function extractVehicleNumber(vehicleName: string): number | null {
   for (const { pattern } of patterns) {
     const match = clean.match(pattern)
     if (match) {
-      const number = parseInt(match[1] || match[0], 10)
-      if (!isNaN(number) && number > 0 && number < 10000) {
-        return number
+      const number = match[1] || match[0]
+      const parsed = parseInt(number, 10)
+      if (!isNaN(parsed) && parsed > 0 && parsed < 10000) {
+        return number // Return as string
       }
     }
   }

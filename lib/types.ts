@@ -57,7 +57,7 @@ export interface Job {
   date: string
   status: string
   type: string
-  truckId?: number
+  truckId?: string  // String: "72", "81", etc
   
   // ✅ ENHANCED PROPERTIES
   customer?: string | null         // From Customer_C1 (Capital C)
@@ -67,7 +67,7 @@ export interface Job {
   dueDate?: string | null          // From due_date
   
   // 🚛 ROUTING PROPERTIES (CORRECTLY MAPPED)
-  routeId?: number | null          // From '_kf_route_id'
+  routeId?: string | null          // From '_kf_route_id' - String: "1", "5", "WH"
   driverId?: number | null         // From '_kf_driver_id' (numeric ID)
   driverName?: string | null       // Driver name if _kf_driver_id is string
   leadId?: number | null           // From '_kf_lead_id' (numeric ID)

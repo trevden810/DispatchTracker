@@ -38,9 +38,9 @@ export async function correlateByRoute(
     
     console.log(`  Checking ${vehicle.name} (number: ${vehicleNumber})`)
     
-    // Try exact truck ID match
+    // Try exact truck ID match - STRING COMPARISON
     const truckMatch = activeJobs.find(j => 
-      j.truckId?.toString() === vehicleNumber &&
+      j.truckId && j.truckId === vehicleNumber &&
       !assignedJobIds.has(j.id)
     )
     
@@ -56,14 +56,13 @@ export async function correlateByRoute(
       continue
     }
     
-    // Try STRICT route ID match - exact match only, no substring matching
+    // Try STRICT route ID match - STRING COMPARISON
     const routeMatch = activeJobs.find(j => {
       if (!j.routeId || assignedJobIds.has(j.id)) return false
-      const routeStr = j.routeId.toString()
       
       // STRICT: Only match if vehicle number EXACTLY equals route ID
       // This prevents "TRUCK 81" from matching route "1"
-      return vehicleNumber === routeStr
+      return vehicleNumber === j.routeId
     })
     
     if (routeMatch) {

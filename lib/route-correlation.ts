@@ -80,9 +80,9 @@ export async function correlateByRoute(
     // Try driver name match
     if (vehicle.diagnostics?.driverName) {
       const driverMatch = activeJobs.find(j =>
-        j.driverId && 
+        j.driverName && 
         !assignedJobIds.has(j.id) &&
-        fuzzyMatchDriver(vehicle.diagnostics!.driverName!, j.driverId)
+        fuzzyMatchDriver(vehicle.diagnostics!.driverName!, j.driverName)
       )
       
       if (driverMatch) {

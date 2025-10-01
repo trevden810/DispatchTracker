@@ -173,7 +173,7 @@ export async function GET(request: Request) {
           low: 0
         },
         averageDistance: 0,
-        matchTypes: {
+        correlationMethods: {
           truck: routeCorrelations.filter(c => c.matchType === 'truck').length,
           route: routeCorrelations.filter(c => c.matchType === 'route').length,
           driver: routeCorrelations.filter(c => c.matchType === 'driver').length

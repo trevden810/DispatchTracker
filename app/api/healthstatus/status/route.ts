@@ -76,7 +76,7 @@ function analyzeVehicleHealth(vehicle: any): VehicleHealth {
       message: `Coolant High: ${diagnostics.coolantTemp}°F`,
       value: diagnostics.coolantTemp
     })
-    if (overallStatus !== 'critical') overallStatus = 'warning'
+    if (overallStatus === 'healthy') overallStatus = 'warning'
   }
   
   // Check oil pressure
@@ -95,7 +95,7 @@ function analyzeVehicleHealth(vehicle: any): VehicleHealth {
       message: `Oil Pressure Low: ${diagnostics.oilPressure} PSI`,
       value: diagnostics.oilPressure
     })
-    if (overallStatus !== 'critical') overallStatus = 'warning'
+    if (overallStatus === 'healthy') overallStatus = 'warning'
   }
   
   // Check battery voltage
@@ -114,7 +114,7 @@ function analyzeVehicleHealth(vehicle: any): VehicleHealth {
       message: `Battery Low: ${diagnostics.batteryVoltage}V`,
       value: diagnostics.batteryVoltage
     })
-    if (overallStatus !== 'critical') overallStatus = 'warning'
+    if (overallStatus === 'healthy') overallStatus = 'warning'
   }
   
   // Check fuel level
@@ -125,7 +125,7 @@ function analyzeVehicleHealth(vehicle: any): VehicleHealth {
       message: `Fuel Low: ${diagnostics.fuelLevel}%`,
       value: diagnostics.fuelLevel
     })
-    if (overallStatus !== 'critical') overallStatus = 'warning'
+    if (overallStatus === 'healthy') overallStatus = 'warning'
   }
   
   // Extract location info

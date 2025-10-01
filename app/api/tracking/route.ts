@@ -142,12 +142,10 @@ export async function GET(request: Request) {
     
     // Step 5: Generate summary statistics
     const correlatedVehicles = correlations.filter(c => c.assignedJob !== null).length
-    const routeAssigned = routeCorrelations.length
 
     console.log(`📊 Correlation Summary:`)
     console.log(`   Total correlations: ${routeCorrelations.length}`)
     console.log(`   Vehicles with jobs: ${correlatedVehicles}/${vehicles.length}`)
-    console.log(`   Route assigned: ${routeAssigned}`)
     console.log('🔍 TRACKING LOCATION DEBUG: Final correlation data sample:', correlations.slice(0, 2).map(c => ({
       vehicleId: c.vehicleId,
       hasLocation: !!(c.proximity),
@@ -168,12 +166,13 @@ export async function GET(request: Request) {
         totalVehicles: vehicles.length,
         totalJobs: jobs.length,
         correlatedVehicles,
-        routeAssigned,
+        atLocationCount: 0,
         confidenceBreakdown: {
           high: routeCorrelations.filter(c => c.confidence === 'high').length,
           medium: routeCorrelations.filter(c => c.confidence === 'medium').length,
           low: 0
         },
+        averageDistance: 0,
         matchTypes: {
           truck: routeCorrelations.filter(c => c.matchType === 'truck').length,
           route: routeCorrelations.filter(c => c.matchType === 'route').length,

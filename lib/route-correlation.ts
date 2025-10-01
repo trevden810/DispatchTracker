@@ -23,6 +23,7 @@ export async function correlateByRoute(
   
   // Filter active jobs with route assignments
   const activeJobs = jobs.filter(j => 
+    j.status !== 'Completed' && 
     j.status !== 'Complete' && 
     j.status !== 'Canceled' &&
     (j.routeId || j.driverId || j.truckId)
